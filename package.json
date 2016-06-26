@@ -32,5 +32,8 @@
     "webpack": "1.13.0",
     "webpack-dev-server": "1.14.1",
     "webpack-merge": "0.12.0"
+  },
+  "dependencies": {
+    "zxcvbn": "^4.3.0"
   }
 }
