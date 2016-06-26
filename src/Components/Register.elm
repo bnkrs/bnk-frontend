@@ -128,7 +128,9 @@ modelToJson model =
       then [ ("recoveryMethod", JE.string "email"), ("email", JE.string model.email) ]
       else [ ("recoveryMethod", JE.string "phrase") ]
   in
-    JE.encode 0 <| JE.object (List.append usernamePassword recovery)
+    JE.encode 0
+      <| JE.object
+      <| List.append usernamePassword recovery
 
 
 
