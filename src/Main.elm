@@ -7,6 +7,7 @@ import String
 import Result
 
 import Components.Register
+import Components.Login
 
 -- APP
 
@@ -21,20 +22,29 @@ main =
 
 type Page = HomePage
   | RegisterPage
+  | LoginPage
 
 
 type alias Model =
-  { register : Components.Register.Model, currentPage : Page  }
+  { register : Components.Register.Model
+  , login : Components.Login.Model
+  , currentPage : Page
+  }
 
 
 init : Page -> ( Model, Cmd Msg )
-init page =
-    ( { register = Components.Register.initialModel, currentPage = page} , Cmd.none )
+init page = (
+      { register = Components.Register.initialModel
+      , login = Components.Login.initialModel
+      , currentPage = page
+      },
+    Cmd.none )
 
 
 -- UPDATE
 
 type Msg = Register Components.Register.Msg
+  | Login Components.Login.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg)
@@ -42,9 +52,15 @@ update msg model =
   case msg of
     Register rmsg ->
       let
-        registerResult = Components.Register.update rmsg model.register
+        newRegisterModel = Components.Register.update rmsg model.register
       in
-      ( { model | register = fst registerResult }, Cmd.map Register ( snd registerResult ) )
+        ( { model | register = fst newRegisterModel }, Cmd.map Register ( snd newRegisterModel ) )
+    Login lmsg ->
+      let
+        newLoginModel = Components.Login.update lmsg model.login
+      in
+        ( { model | login = fst newLoginModel }, Cmd.map Login ( snd newLoginModel ) )
+
 
 
 urlUpdate : Page -> Model -> ( Model, Cmd Msg)
@@ -59,6 +75,7 @@ matchers =
   UrlParser.oneOf
     [ UrlParser.format HomePage (UrlParser.s "")
     , UrlParser.format RegisterPage (UrlParser.s "register")
+    , UrlParser.format LoginPage (UrlParser.s "login")
     ]
 
 
@@ -87,6 +104,10 @@ view model =
       RegisterPage ->
         model.register
           |> Components.Register.view
-          |> Html.map Register 
+          |> Html.map Register
+      LoginPage ->
+        model.login
+          |> Components.Login.view
+          |> Html.map Login
     , text (toString model)
   ]
