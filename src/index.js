@@ -7,7 +7,6 @@ var zxcvbn =  require('zxcvbn');
 var Elm = require( './Main' );
 var app = Elm.Main.embed( document.getElementById( 'main' ) );
 app.ports.checkPassword.subscribe(function(password){
-  console.log(password);
   var result = zxcvbn(password);
   app.ports.passwordScore.send(result.score);
 });
