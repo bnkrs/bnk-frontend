@@ -6,6 +6,8 @@ import UrlParser
 import String
 import Result
 
+import Globals
+
 import Components.Register
 import Components.Login
 
@@ -29,6 +31,7 @@ type alias Model =
   { register : Components.Register.Model
   , login : Components.Login.Model
   , currentPage : Page
+  , globals : Globals.Model
   }
 
 
@@ -36,6 +39,7 @@ init : Page -> ( Model, Cmd Msg )
 init page = (
       { register = Components.Register.initialModel
       , login = Components.Login.initialModel
+      , globals = Globals.initialModel
       , currentPage = page
       },
     Cmd.none )
