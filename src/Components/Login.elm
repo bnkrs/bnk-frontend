@@ -3,6 +3,15 @@ import Html exposing (..)
 import Html.Events exposing (onInput, onFocus, onClick)
 import Html.Attributes exposing (..)
 import String
+import Json.Decode as JD exposing ((:=))
+import Json.Encode as JE
+import Http
+import Maybe
+import Task
+
+import Globals
+import Config
+import Utils.HttpUtils as HttpUtils
 
 
 -- MODEL
@@ -10,6 +19,7 @@ import String
 type alias Model =
   { username : String
   , password : String
+  , httpError: Maybe Http.Error
   }
 
 
@@ -17,6 +27,7 @@ initialModel : Model
 initialModel =
   { username = ""
   , password = ""
+  , httpError = Nothing
   }
 
 
@@ -25,17 +36,63 @@ initialModel =
 type Msg = ChangeUsername String
   | ChangePassword String
   | Login
+  | LoginFailed Http.Error
+  | LoginSuccessful String
 
+type alias UpdateResult =
+  { model : Model
+  , globals : Globals.Model
+  , cmd: Cmd Msg
+  }
 
-update : Msg -> Model -> (Model, Cmd Msg)
-update msg model =
+update : Msg -> Model -> Globals.Model -> UpdateResult
+update msg model global =
   case msg of
     ChangeUsername name ->
-      ( { model | username = name }, Cmd.none )
+      { model = { model | username = name }
+      , globals = global
+      , cmd = Cmd.none }
     ChangePassword password ->
-      ( { model | password = password }, Cmd.none )
+      { model = { model | password = password }
+      , globals = global
+      , cmd = Cmd.none }
     Login ->
-      ( model, Cmd.none)
+     { model = model
+     , globals = global
+     , cmd = login model }
+    LoginFailed error ->
+     { model = { model | httpError = Just error }
+     , globals = global
+     , cmd = Cmd.none }
+    LoginSuccessful token ->
+     { model = model
+     , globals = { global | apiToken = token}
+     , cmd = Cmd.none }
+
+
+
+login : Model -> Cmd Msg
+login model =
+  let
+    loginUrl = Config.rootUrl ++ "/auth/getToken"
+    body = Http.string <| modelToJson model
+    decoder = "token" := JD.string
+  in
+    Task.perform
+      LoginFailed
+      LoginSuccessful
+      (HttpUtils.post decoder loginUrl body)
+
+
+modelToJson : Model -> String
+modelToJson model =
+  let
+    usernamePassword =
+      JE.object
+      [ ("username", JE.string model.username)
+      , ("password", JE.string model.password) ]
+  in
+    JE.encode 0 usernamePassword
 
 
 -- view

@@ -61,9 +61,12 @@ update msg model =
         ( { model | register = fst newRegisterModel }, Cmd.map Register ( snd newRegisterModel ) )
     Login lmsg ->
       let
-        newLoginModel = Components.Login.update lmsg model.login
+        updateResult = Components.Login.update lmsg model.login model.globals
+        newModel =
+          { model | login = updateResult.model
+          , globals = updateResult.globals}
       in
-        ( { model | login = fst newLoginModel }, Cmd.map Login ( snd newLoginModel ) )
+        ( newModel, Cmd.map Login updateResult.cmd )
 
 
 
