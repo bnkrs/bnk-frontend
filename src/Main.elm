@@ -64,7 +64,7 @@ update msg model =
 
 
 urlUpdate : Page -> Model -> ( Model, Cmd Msg)
-urlUpdate page model = (model, Cmd.none)
+urlUpdate page model = ({ model | currentPage = page}, Cmd.none)
 
 
 locationParser : Navigation.Parser Page
