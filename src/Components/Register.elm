@@ -5,15 +5,14 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onFocus, onClick)
 import String
 import Regex
-import Http
 import Json.Decode as JD exposing((:=))
 import Json.Encode as JE
 import Task
 import Maybe
 import Navigation
+import HttpBuilder exposing (..)
 
 import Config
-import Utils.HttpUtils as HttpUtils
 
 
 -- MODEL
@@ -29,7 +28,7 @@ type alias Model =
   , passwordScore : Int
   , phrase : List String
   , wasRegistrationSuccessfull : Bool
-  , conncectionError : Maybe Http.Error
+  , conncectionError : Maybe (Error String)
   }
 
 
@@ -67,9 +66,9 @@ type Msg = ChangeUsername String
   | FocusPasswordConfirm
   | UpdatePasswordScore Int
   | Register
-  | RegistrationCompleted Bool
-  | RegistrationCompletedWithPhase ( Bool, List String )
-  | RegistriationFailed Http.Error
+  | RegistrationCompleted (Response Bool)
+  | RegistrationCompletedWithPhase (Response ( Bool, List String ))
+  | RegistriationFailed (Error String)
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -90,36 +89,66 @@ update msg model =
     UpdatePasswordScore score ->
       { model | passwordScore = score } ! []
     Register ->
-      model ! [ registerUser model ]
-    RegistrationCompleted success ->
-      { model | wasRegistrationSuccessfull = success } ! [ Navigation.newUrl "#login" ]
-    RegistrationCompletedWithPhase (success, phrase) ->
-      { model | wasRegistrationSuccessfull = success, phrase = phrase } ! []
+      model ! [ if emailValid model then registerUserWithEmail model else registerUserWithPhrase model ]
+    RegistrationCompleted response ->
+      { model | wasRegistrationSuccessfull = response.data } ! [ Navigation.newUrl "#login" ]
+    RegistrationCompletedWithPhase response ->
+      let
+        wasSuccessfull = fst response.data
+        phrase = snd response.data
+      in
+      { model | wasRegistrationSuccessfull = wasSuccessfull, phrase = phrase } ! []
     RegistriationFailed error ->
-      { model | conncectionError = Maybe.Just error } ! []
+      { model | conncectionError = Just error } ! []
 
 
-registerUser : Model -> Cmd Msg
-registerUser model =
+
+registerUserWithEmail : Model -> Cmd Msg
+registerUserWithEmail model =
+  Task.perform
+    RegistriationFailed
+    RegistrationCompleted
+    (doMailRegister model)
+
+
+registerUserWithPhrase : Model -> Cmd Msg
+registerUserWithPhrase model =
+  Task.perform
+    RegistriationFailed
+    RegistrationCompletedWithPhase
+    (doPhraseRegister model)
+
+
+doMailRegister : Model -> Task.Task (Error String) (Response Bool)
+doMailRegister model  =
   let
     registerUrl = Config.rootUrl ++ "/user/new"
-    successDecoder = "success" := JD.bool
-    phraseDecoder = JD.object2 (,) ("success" := JD.bool) ("phrase" := JD.list JD.string)
-    body = Http.string <| modelToJson model
+    registerSuccessReader = jsonReader ("success" := JD.bool)
+    registerFailReader = jsonReader ( JD.at ["error"] ("message" := JD.string ))
+    body = modelToJson model
   in
-    if emailValid model then
-      Task.perform
-        RegistriationFailed
-        RegistrationCompleted
-        (HttpUtils.post successDecoder registerUrl body)
-    else
-      Task.perform
-        RegistriationFailed
-        RegistrationCompletedWithPhase
-        (HttpUtils.post phraseDecoder registerUrl body)
+    HttpBuilder.post registerUrl
+      |> withJsonBody body
+      |> withHeader "Content-Type" "application/json"
+      |> send registerSuccessReader registerFailReader
 
 
-modelToJson : Model -> String
+doPhraseRegister : Model -> Task.Task (Error String) (Response (Bool, List String))
+doPhraseRegister model  =
+  let
+    registerUrl = Config.rootUrl ++ "/user/new"
+    registerFailReader = jsonReader ( JD.at ["error"] ("message" := JD.string ))
+    registerSuccessReader =
+      jsonReader <| JD.object2 (,) ("success" := JD.bool) ("phrase" := JD.list JD.string)
+    body = modelToJson model
+  in
+    HttpBuilder.post registerUrl
+      |> withJsonBody body
+      |> withHeader "Content-Type" "application/json"
+      |> send registerSuccessReader registerFailReader
+
+
+modelToJson : Model -> JE.Value
 modelToJson model =
   let
     usernamePassword =
@@ -129,9 +158,7 @@ modelToJson model =
       then [ ("recoveryMethod", JE.string "email"), ("email", JE.string model.email) ]
       else [ ("recoveryMethod", JE.string "phrase") ]
   in
-    JE.encode 0
-      <| JE.object
-      <| List.append usernamePassword recovery
+    JE.object <| List.append usernamePassword recovery
 
 
 

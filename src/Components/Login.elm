@@ -36,8 +36,8 @@ initialModel =
 type Msg = ChangeUsername String
   | ChangePassword String
   | Login
-  | LoginFailed (HttpBuilder.Error String)
-  | LoginSuccessful (HttpBuilder.Response String)
+  | LoginFailed (Error String)
+  | LoginSuccessful (Response String)
 
 type alias UpdateResult =
   { model : Model
@@ -79,7 +79,7 @@ login model =
       (doLogin model)
 
 
-doLogin : Model -> Task.Task (HttpBuilder.Error String) (HttpBuilder.Response String)
+doLogin : Model -> Task.Task (Error String) (Response String)
 doLogin model =
   let
     loginUrl = Config.rootUrl ++ "/auth/getToken"
