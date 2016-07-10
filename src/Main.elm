@@ -86,6 +86,7 @@ matchers : UrlParser.Parser (Page -> a) a
 matchers =
   UrlParser.oneOf
     [ UrlParser.format HomePage (UrlParser.s "")
+    , UrlParser.format HomePage (UrlParser.s "home")
     , UrlParser.format RegisterPage (UrlParser.s "register")
     , UrlParser.format LoginPage (UrlParser.s "login")
     ]
