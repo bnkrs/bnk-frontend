@@ -154,13 +154,11 @@ modelToJson model =
     usernamePassword =
       [ ("username", JE.string model.username)
       , ("password", JE.string model.password) ]
-    recovery = if emailValid model
+    recovery = if not <| emailEmpty model
       then [ ("recoveryMethod", JE.string "email"), ("email", JE.string model.email) ]
       else [ ("recoveryMethod", JE.string "phrase") ]
   in
     JE.object <| List.append usernamePassword recovery
-
-
 
 
 -- VIEW
@@ -168,9 +166,9 @@ modelToJson model =
 view : Model -> Html Msg
 view model =
   div [ class "row" ][
-    div [ class "col-xs-4" ] [],
-    div [ class "col-xs-4" ][ errorView model, formView model ],
-    div [ class "col-xs-4" ] []
+    div [ class "col-xs-3" ] [],
+    div [ class "col-xs-6" ][ errorView model, phraseView model, formView model ],
+    div [ class "col-xs-3" ] []
   ]
 
 
@@ -183,65 +181,88 @@ errorView model =
             []
         , span [ class "sr-only" ]
             [ text "Error:" ]
-        , text (" " ++ (toString error))
+        , text (" " ++ (httpErrorToString error))
         ]
     Nothing ->
       text ""
 
+phraseView : Model -> Html Msg
+phraseView model =
+  let
+    hasPhrase = List.length model.phrase > 0
+    phraseStr = List.foldl (\word phrase -> phrase ++ " " ++ word) " " model.phrase
+    expplaination =
+      """You have registered without an email address.
+         If you forget your password, you can revocer your account using this recovery phrase:
+
+      """
+  in
+    if hasPhrase
+      then
+        div [ class "alert alert-success lead", attribute "role" "alert" ]
+        [
+          text expplaination, br [] [], b [] [text phraseStr ]
+        ]
+      else
+        text ""
 
 formView : Model -> Html Msg
 formView model =
-  div [class "panel panel-primary register-form"]
-    [
-      div [class "panel-heading"] [text "Register"],
-      div [class "panel-body"]
-        [ div [ class <| "form-group"]
-            [ label [ for "userName" ]
-                [ text "Username" ]
-            , input [ class "form-control", id "userName"
-              , placeholder "Username", type' "text", onInput ChangeUsername ]
-                []
+  if model.wasRegistrationSuccessfull
+    then
+      a [ href "#login", class "text-center lead"] [text "Click here to log in!"]
+    else
+      div [class "panel panel-primary register-form"]
+        [
+          div [class "panel-heading"] [text "Register"],
+          div [class "panel-body"]
+            [ div [ class <| "form-group"]
+                [ label [ for "userName" ]
+                    [ text "Username" ]
+                , input [ class "form-control", id "userName"
+                  , placeholder "Username", type' "text", onInput ChangeUsername ]
+                    []
+                ]
+            , div [ class <| "form-group " ++ passwordValidationClassName model]
+                [ label [ for "password" ]
+                    [ text "Password" ]
+                , input [ class "form-control", id "password"
+                  , placeholder "Password", type' "password"
+                  , onInput ChangePassword
+                  , onFocus FocusPassword ]
+                    []
+                ]
+            , label [] [text "Password Strength"]
+            , div [ class "progress"]
+              [
+                div [ class <| "progress-bar " ++ progressBarColorClassName model
+                    , attribute "role" "progressbar"
+                    , style [ ("width", (toString (calculateWith model)) ++ "%" )]]
+                    []
+              ]
+            , div [ class <| "form-group " ++ passwordConfirmValidationClassName model ]
+                [ label [ for "passwordConfirm" ]
+                    [ text "Confirm Password" ]
+                , input [ class "form-control", id "passwordConfirm"
+                  , placeholder "Confirm Password", type' "password"
+                  , onInput ChangePassswordConfirm
+                  , onFocus FocusPasswordConfirm ]
+                    []
+                ]
+            , div [ class <| "form-group " ++ emailValidationClassName model ]
+                [ label [ for "email" ]
+                    [ text "E-Mail (optional)" ]
+                , input [ class "form-control", id "email"
+                  , placeholder "user@domain.tld", type' "email"
+                  , onInput ChangeEmail]
+                    []
+                ]
+            , button [ class "btn btn-primary", type' "submit"
+              , disabled <| not (isValid model)
+              , onClick Register]
+                [ text "Register" ]
             ]
-        , div [ class <| "form-group " ++ passwordValidationClassName model]
-            [ label [ for "password" ]
-                [ text "Password" ]
-            , input [ class "form-control", id "password"
-              , placeholder "Password", type' "password"
-              , onInput ChangePassword
-              , onFocus FocusPassword ]
-                []
-            ]
-        , label [] [text "Password Strength"]
-        , div [ class "progress"]
-          [
-            div [ class <| "progress-bar " ++ progressBarColorClassName model
-                , attribute "role" "progressbar"
-                , style [ ("width", (toString (calculateWith model)) ++ "%" )]]
-                []
-          ]
-        , div [ class <| "form-group " ++ passwordConfirmValidationClassName model ]
-            [ label [ for "passwordConfirm" ]
-                [ text "Confirm Password" ]
-            , input [ class "form-control", id "passwordConfirm"
-              , placeholder "Confirm Password", type' "password"
-              , onInput ChangePassswordConfirm
-              , onFocus FocusPasswordConfirm ]
-                []
-            ]
-        , div [ class <| "form-group " ++ emailValidationClassName model ]
-            [ label [ for "email" ]
-                [ text "E-Mail (optional)" ]
-            , input [ class "form-control", id "email"
-              , placeholder "user@domain.tld", type' "email"
-              , onInput ChangeEmail]
-                []
-            ]
-        , button [ class "btn btn-primary", type' "submit"
-          , disabled <| not (isValid model)
-          , onClick Register]
-            [ text "Register" ]
         ]
-    ]
 
 
 passwordValidationClassName : Model -> String
