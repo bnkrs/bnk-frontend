@@ -67,7 +67,7 @@ update msg model global =
      , cmd = Cmd.none }
     LoginSuccessful token ->
      { model = model
-     , globals = { global | apiToken = token.data }
+     , globals = { global | apiToken = token.data , username = model.username }
      , cmd = Navigation.newUrl "#home" }
 
 

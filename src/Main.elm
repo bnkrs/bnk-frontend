@@ -121,7 +121,7 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
   div []
-      [ navBar
+      [ navBar model
       , div [ class "container" ]
           [ div [ class "content" ]
             [ case model.currentPage of
@@ -142,9 +142,15 @@ view model =
   ]
 
 
-navBar : Html a
-navBar =
-    nav [ class "navbar navbar-inverse navbar-fixed-top" ]
+navBar : Model -> Html Msg
+navBar model =
+  let
+    topRightText =
+      if String.length model.globals.username > 0
+        then "Hello, " ++ model.globals.username
+        else ""
+  in
+    nav [ class "navbar navbar-default navbar-fixed-top" ]
         [ div [ class "container" ]
             [ div [ class "navbar-header" ]
                 [ button [ attribute "aria-controls" "navbar", attribute "aria-expanded" "false", class "navbar-toggle collapsed", attribute "data-target" "#navbar", attribute "data-toggle" "collapse", type' "button" ]
@@ -159,22 +165,22 @@ navBar =
                     ]
                 , a [ class "navbar-brand", href "#" ]
                     [ text "bnk" ]
-                ]
-            , div [ class "collapse navbar-collapse", id "navbar" ]
-                [ ul [ class "nav navbar-nav" ]
-                    [ li [ class "active" ]
-                        [ a [ href "#" ]
-                            [ text "Home" ]
-                        ]
-                    , li []
-                        [ a [ href "#about" ]
-                            [ text "About" ]
-                        ]
-                    , li []
-                        [ a [ href "#contact" ]
-                            [ text "Contact" ]
-                        ]
-                    ]
-                ]
+                ],
+                div [ class "navbar-collapse collapse", id "navbar" ]
+                  [ ul [ class "nav navbar-nav" ]
+                      [ li [ class "active" ]
+                          [ a [ href "#" ]
+                              [ text "Home" ]
+                          ]
+                      , li []
+                          [ a [ href "#" ]
+                              [ text "Contact" ]
+                          ]
+                      ]
+                  , ul [ class "nav navbar-nav navbar-right" ]
+                      [ li []
+                        [span [ class "navbar-brand" ] [ text topRightText ]]
+                      ]
+                  ]
             ]
         ]
