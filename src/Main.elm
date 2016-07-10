@@ -17,7 +17,12 @@ main : Program Never
 main =
   Navigation.program
     locationParser
-    { init = init, view = view, update = update, urlUpdate = urlUpdate, subscriptions = subscriptions }
+    { init = init
+    , view = view
+    , update = update
+    , urlUpdate = urlUpdate
+    , subscriptions = subscriptions
+    }
 
 
 -- MODEL
