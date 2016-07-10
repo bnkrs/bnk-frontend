@@ -5,14 +5,13 @@ import Html.Attributes exposing (..)
 import String
 import Json.Decode as JD exposing ((:=))
 import Json.Encode as JE
-import Http
+import HttpBuilder exposing (..)
 import Maybe
 import Task
 import Navigation
 
 import Globals
 import Config
-import Utils.HttpUtils as HttpUtils
 
 
 -- MODEL
@@ -20,7 +19,7 @@ import Utils.HttpUtils as HttpUtils
 type alias Model =
   { username : String
   , password : String
-  , httpError: Maybe Http.Error
+  , httpError: Maybe (Error String)
   }
 
 
@@ -37,8 +36,8 @@ initialModel =
 type Msg = ChangeUsername String
   | ChangePassword String
   | Login
-  | LoginFailed Http.Error
-  | LoginSuccessful String
+  | LoginFailed (HttpBuilder.Error String)
+  | LoginSuccessful (HttpBuilder.Response String)
 
 type alias UpdateResult =
   { model : Model
@@ -67,33 +66,41 @@ update msg model global =
      , cmd = Cmd.none }
     LoginSuccessful token ->
      { model = model
-     , globals = { global | apiToken = token}
+     , globals = { global | apiToken = token.data }
      , cmd = Navigation.newUrl "#home" }
 
 
 
 login : Model -> Cmd Msg
 login model =
-  let
-    loginUrl = Config.rootUrl ++ "/auth/getToken"
-    body = Http.string <| modelToJson model
-    decoder = "token" := JD.string
-  in
     Task.perform
       LoginFailed
       LoginSuccessful
-      (HttpUtils.post decoder loginUrl body)
+      (doLogin model)
 
 
-modelToJson : Model -> String
-modelToJson model =
+doLogin : Model -> Task.Task (HttpBuilder.Error String) (HttpBuilder.Response String)
+doLogin model =
   let
-    usernamePassword =
-      JE.object
-      [ ("username", JE.string model.username)
-      , ("password", JE.string model.password) ]
+    loginUrl = Config.rootUrl ++ "/auth/getToken"
+    loginSuccessReader = jsonReader ( "token" := JD.string )
+    loginFailReader = jsonReader ( JD.at ["error"] ("message" := JD.string ))
+    body = modelToJson model
   in
-    JE.encode 0 usernamePassword
+    HttpBuilder.post loginUrl
+      |> withJsonBody body
+      |> withHeader "Content-Type" "application/json"
+      |> send loginSuccessReader loginFailReader
+
+
+
+
+
+modelToJson : Model -> JE.Value
+modelToJson model =
+  JE.object
+  [ ("username", JE.string model.username)
+  , ("password", JE.string model.password) ]
 
 
 -- view
@@ -119,10 +126,33 @@ errorView model =
             []
         , span [ class "sr-only" ]
             [ text "Error:" ]
-        , text (" " ++ (toString error))
+        , text (" " ++ (httpErrorToString error))
         ]
     Nothing ->
       text ""
+
+
+httpErrorToString : HttpBuilder.Error String -> String
+httpErrorToString error =
+  case error of
+    UnexpectedPayload str ->
+      """ Internal Error!
+          You can't do anything about this, contact someone who does tech stuff!
+      """
+    NetworkError ->
+      """ Network Error! Make sure you have an internet connection and try again.
+          If that does not work, contact someone who administrates your BNK installation!
+      """
+    Timeout ->
+      """ Network Error! Make sure you have an internet connection and try again.
+          If that does not work, contact someone who administrates your BNK installation!
+      """
+    BadResponse response ->
+      if response.data ==  "UsernamePasswordWrong"
+        then "Wrong username or password!"
+        else toString response.data
+
+
 
 formView : Model -> Html Msg
 formView model =
