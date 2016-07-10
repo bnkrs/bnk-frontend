@@ -1,15 +1,23 @@
-module Utils.HttpUtils exposing (post)
-import Json.Decode as Json
-import Http exposing (Error, Body, fromJson, send, defaultSettings)
-import Task exposing (Task)
+module Utils.HttpUtils exposing (..)
+import HttpBuilder exposing (..)
 
-post : Json.Decoder value -> String -> Body -> Task Error value
-post decoder url body =
-  let request =
-        { verb = "POST"
-        , headers = [("Content-type", "application/json")]
-        , url = url
-        , body = body
-        }
-  in
-      fromJson decoder (send defaultSettings request)
+
+httpErrorToString : HttpBuilder.Error String -> String
+httpErrorToString error =
+  case error of
+    UnexpectedPayload str ->
+      """ Internal Error!
+          You can't do anything about this, contact someone who does tech stuff!
+      """
+    NetworkError ->
+      """ Network Error! Make sure you have an internet connection and try again.
+          If that does not work, contact someone who administrates your BNK installation!
+      """
+    Timeout ->
+      """ Network Error! Make sure you have an internet connection and try again.
+          If that does not work, contact someone who administrates your BNK installation!
+      """
+    BadResponse response ->
+      if response.data ==  "UsernamePasswordWrong"
+        then "Wrong username or password!"
+        else toString response.data
