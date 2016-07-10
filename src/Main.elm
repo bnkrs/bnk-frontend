@@ -53,6 +53,7 @@ init page =
   in
     ( model, command )
 
+
 switchPageIfNeeded : Model -> Cmd Msg
 switchPageIfNeeded model =
   if model.globals.apiToken == ""
