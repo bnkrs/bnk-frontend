@@ -75,27 +75,27 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     ChangeUsername name ->
-      ( { model | username = name }, Cmd.none )
+      { model | username = name } ! []
     ChangePassword password ->
-      ( { model | password = password }, checkPassword password )
+      { model | password = password } ! [ checkPassword password ]
     ChangePassswordConfirm passwordConfirm ->
-      ( { model | passwordConfirm = passwordConfirm }, Cmd.none )
+      { model | passwordConfirm = passwordConfirm } ! []
     ChangeEmail mail ->
-      ( { model | email = mail }, Cmd.none )
+      { model | email = mail } ! []
     FocusPassword ->
-      ( { model | passwordWasFocussed = True}, Cmd.none)
+      { model | passwordWasFocussed = True } ! []
     FocusPasswordConfirm ->
-      ( { model | passwordConfirmWasFocussed = True}, Cmd.none)
+      { model | passwordConfirmWasFocussed = True } ! []
     UpdatePasswordScore score ->
-      ( { model | passwordScore = score }, Cmd.none )
+      { model | passwordScore = score } ! []
     Register ->
-      ( model, registerUser model )
+      model ! [ registerUser model ]
     RegistrationCompleted success ->
-      ( {model | wasRegistrationSuccessfull = success }, Cmd.none )
+      { model | wasRegistrationSuccessfull = success } ! []
     RegistrationCompletedWithPhase (success, phrase) ->
-      ( {model | wasRegistrationSuccessfull = success, phrase = phrase }, Cmd.none)
+      { model | wasRegistrationSuccessfull = success, phrase = phrase } ! []
     RegistriationFailed error ->
-      ( { model | conncectionError = Maybe.Just error }, Cmd.none )
+      { model | conncectionError = Maybe.Just error } ! []
 
 
 registerUser : Model -> Cmd Msg

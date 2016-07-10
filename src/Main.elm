@@ -71,7 +71,7 @@ update msg model =
       let
         newRegisterModel = Components.Register.update rmsg model.register
       in
-        ( { model | register = fst newRegisterModel }, Cmd.map Register ( snd newRegisterModel ) )
+        { model | register = fst newRegisterModel } ! [ Cmd.map Register ( snd newRegisterModel ) ]
     Login lmsg ->
       let
         updateResult = Components.Login.update lmsg model.login model.globals
@@ -79,7 +79,7 @@ update msg model =
           { model | login = updateResult.model
           , globals = updateResult.globals}
       in
-        ( newModel, Cmd.map Login updateResult.cmd )
+        newModel ! [ Cmd.map Login updateResult.cmd ]
 
 
 urlUpdate : Page -> Model -> ( Model, Cmd Msg)
