@@ -2,6 +2,15 @@ $icon-font-path: '~bootstrap-sass/assets/fonts/bootstrap/';
 @import '~bootstrap-sass/assets/stylesheets/bootstrap/_mixins.scss';
 @import '~bootstrap-sass/assets/stylesheets/_bootstrap.scss';
 
+
+body {
+  padding-top: 50px;
+}
+
+.content {
+  padding: 40px 15px;
+}
+
 .register-form {
   margin-top: 10rem;
 }

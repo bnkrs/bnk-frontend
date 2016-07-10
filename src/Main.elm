@@ -119,17 +119,61 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-  div [ class "container-fluid" ][
-    case model.currentPage of
-      HomePage ->
-        div [] []
-      RegisterPage ->
-        model.register
-          |> Components.Register.view
-          |> Html.map Register
-      LoginPage ->
-        model.login
-          |> Components.Login.view
-          |> Html.map Login
-    , text (toString model)
+  div []
+      [ navBar
+      , div [ class "container" ]
+          [ div [ class "content" ]
+            [ case model.currentPage of
+                  HomePage ->
+                    text "Homepage"
+                  RegisterPage ->
+                    model.register
+                      |> Components.Register.view
+                      |> Html.map Register
+                  LoginPage ->
+                    model.login
+                      |> Components.Login.view
+                      |> Html.map Login
+                , hr [] []
+                , text (toString model)
+            ]
+          ]
   ]
+
+
+navBar : Html a
+navBar =
+    nav [ class "navbar navbar-inverse navbar-fixed-top" ]
+        [ div [ class "container" ]
+            [ div [ class "navbar-header" ]
+                [ button [ attribute "aria-controls" "navbar", attribute "aria-expanded" "false", class "navbar-toggle collapsed", attribute "data-target" "#navbar", attribute "data-toggle" "collapse", type' "button" ]
+                    [ span [ class "sr-only" ]
+                        [ text "Toggle navigation" ]
+                    , span [ class "icon-bar" ]
+                        []
+                    , span [ class "icon-bar" ]
+                        []
+                    , span [ class "icon-bar" ]
+                        []
+                    ]
+                , a [ class "navbar-brand", href "#" ]
+                    [ text "bnk" ]
+                ]
+            , div [ class "collapse navbar-collapse", id "navbar" ]
+                [ ul [ class "nav navbar-nav" ]
+                    [ li [ class "active" ]
+                        [ a [ href "#" ]
+                            [ text "Home" ]
+                        ]
+                    , li []
+                        [ a [ href "#about" ]
+                            [ text "About" ]
+                        ]
+                    , li []
+                        [ a [ href "#contact" ]
+                            [ text "Contact" ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
