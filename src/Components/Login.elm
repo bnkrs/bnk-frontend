@@ -129,7 +129,7 @@ formView model =
             ]
         , button [ class "btn btn-primary", type' "submit"
           , disabled <| not (isValid model)
-          , onClick Login]
+          , onClick Login ]
             [ text "Login" ]
         ]
     ]

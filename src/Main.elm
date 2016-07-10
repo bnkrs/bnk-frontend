@@ -74,13 +74,13 @@ update msg model =
         ( newModel, Cmd.map Login updateResult.cmd )
 
 
-
 urlUpdate : Page -> Model -> ( Model, Cmd Msg)
 urlUpdate page model = ({ model | currentPage = page}, Cmd.none)
 
 
 locationParser : Navigation.Parser Page
 locationParser = Navigation.makeParser locationToPage
+
 
 matchers : UrlParser.Parser (Page -> a) a
 matchers =
@@ -104,6 +104,7 @@ locationToPage location =
 subscriptions : Model -> Sub Msg
 subscriptions model =
   Sub.map Register (Components.Register.passwordScore Components.Register.UpdatePasswordScore)
+
 
 -- VIEW
 
