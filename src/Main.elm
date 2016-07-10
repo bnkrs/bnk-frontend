@@ -41,14 +41,22 @@ type alias Model =
 
 
 init : Page -> ( Model, Cmd Msg )
-init page = (
+init page =
+  let
+    model =
       { register = Components.Register.initialModel
       , login = Components.Login.initialModel
       , globals = Globals.initialModel
       , currentPage = page
-      },
-    Cmd.none )
+      }
+    command = switchPageIfNeeded model
+  in
+    ( model, command )
 
+switchPageIfNeeded : Model -> Cmd Msg
+switchPageIfNeeded model =
+  if model.globals.apiToken == ""
+    then Navigation.newUrl "#login" else Cmd.none
 
 -- UPDATE
 
