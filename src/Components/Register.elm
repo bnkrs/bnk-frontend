@@ -12,6 +12,7 @@ import Maybe
 import Navigation
 import HttpBuilder exposing (..)
 
+import Utils.HttpUtils exposing (httpErrorToString)
 import Config
 
 
