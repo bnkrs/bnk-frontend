@@ -103,12 +103,26 @@ view model =
   div [ class "row" ][
     div [ class "col-xs-4" ] [],
     div [ class "col-xs-4" ]
-      [ formView model
+      [ errorView model
+      ,  formView model
       , a [ href "#register", class "text-center lead"] [text "No account? Register Here!"]
       ],
     div [ class "col-xs-4" ] [ ]
   ]
 
+errorView : Model -> Html Msg
+errorView model =
+  case model.httpError of
+    Just error ->
+      div [ class "alert alert-danger", attribute "role" "alert" ]
+        [ span [ attribute "aria-hidden" "true", class "glyphicon glyphicon-exclamation-sign" ]
+            []
+        , span [ class "sr-only" ]
+            [ text "Error:" ]
+        , text (" " ++ (toString error))
+        ]
+    Nothing ->
+      text ""
 
 formView : Model -> Html Msg
 formView model =
