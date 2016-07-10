@@ -10,6 +10,7 @@ import Json.Decode as JD exposing((:=))
 import Json.Encode as JE
 import Task
 import Maybe
+import Navigation
 
 import Config
 import Utils.HttpUtils as HttpUtils
@@ -91,7 +92,7 @@ update msg model =
     Register ->
       model ! [ registerUser model ]
     RegistrationCompleted success ->
-      { model | wasRegistrationSuccessfull = success } ! []
+      { model | wasRegistrationSuccessfull = success } ! [ Navigation.newUrl "#login" ]
     RegistrationCompletedWithPhase (success, phrase) ->
       { model | wasRegistrationSuccessfull = success, phrase = phrase } ! []
     RegistriationFailed error ->
