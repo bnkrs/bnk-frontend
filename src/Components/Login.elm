@@ -101,8 +101,11 @@ view : Model -> Html Msg
 view model =
   div [ class "row" ][
     div [ class "col-xs-4" ] [],
-    div [ class "col-xs-4" ][ formView model],
-    div [ class "col-xs-4" ] []
+    div [ class "col-xs-4" ]
+      [ formView model
+      , a [ href "#register", class "text-center lead"] [text "No account? Register Here!"]
+      ],
+    div [ class "col-xs-4" ] [ ]
   ]
 
 
