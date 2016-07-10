@@ -49,14 +49,14 @@ init page =
       , globals = Globals.initialModel
       , currentPage = page
       }
-    command = switchPageIfNeeded model
+    command = switchPageIfNeeded model page
   in
     ( model, command )
 
 
-switchPageIfNeeded : Model -> Cmd Msg
-switchPageIfNeeded model =
-  if model.globals.apiToken == ""
+switchPageIfNeeded : Model -> Page -> Cmd Msg
+switchPageIfNeeded model page =
+  if model.globals.apiToken == "" && page /= RegisterPage
     then Navigation.newUrl "#login" else Cmd.none
 
 -- UPDATE
