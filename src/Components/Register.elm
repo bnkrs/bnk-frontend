@@ -89,7 +89,13 @@ update msg model =
     UpdatePasswordScore score ->
       { model | passwordScore = score } ! []
     Register ->
-      model ! [ if emailValid model then registerUserWithEmail model else registerUserWithPhrase model ]
+      let
+        command =
+          if not <|emailEmpty model
+            then registerUserWithEmail model
+            else registerUserWithPhrase model
+      in
+        model ! [ command ]
     RegistrationCompleted response ->
       { model | wasRegistrationSuccessfull = response.data } ! [ Navigation.newUrl "#login" ]
     RegistrationCompletedWithPhase response ->
