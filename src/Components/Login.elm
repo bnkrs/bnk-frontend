@@ -8,6 +8,7 @@ import Json.Encode as JE
 import Http
 import Maybe
 import Task
+import Navigation
 
 import Globals
 import Config
@@ -67,7 +68,7 @@ update msg model global =
     LoginSuccessful token ->
      { model = model
      , globals = { global | apiToken = token}
-     , cmd = Cmd.none }
+     , cmd = Navigation.newUrl "#home" }
 
 
 
