@@ -104,7 +104,7 @@ modelToJson model =
   , ("password", JE.string model.password) ]
 
 
--- view
+-- VIEW
 
 view : Model -> Html Msg
 view model =
