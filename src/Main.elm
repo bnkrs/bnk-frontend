@@ -10,6 +10,7 @@ import Globals
 
 import Components.Register
 import Components.Login
+import Components.Home
 
 -- APP
 
@@ -35,8 +36,9 @@ type Page = HomePage
 type alias Model =
   { register : Components.Register.Model
   , login : Components.Login.Model
-  , currentPage : Page
+  , home : Components.Home.Model
   , globals : Globals.Model
+  , currentPage : Page
   }
 
 
@@ -46,23 +48,28 @@ init page =
     model =
       { register = Components.Register.initialModel
       , login = Components.Login.initialModel
+      , home = Components.Home.initialModel
       , globals = Globals.initialModel
       , currentPage = page
       }
-    command = switchPageIfNeeded model page
+    command = commandForPage model page
   in
     ( model, command )
 
 
-switchPageIfNeeded : Model -> Page -> Cmd Msg
-switchPageIfNeeded model page =
-  if model.globals.apiToken == "" && page /= RegisterPage
-    then Navigation.newUrl "#login" else Cmd.none
+commandForPage : Model -> Page -> Cmd Msg
+commandForPage model page =
+  case page of
+    HomePage ->
+      Cmd.map Home <| Components.Home.urlChange model.globals
+    _ ->
+      Cmd.none
 
 -- UPDATE
 
 type Msg = Register Components.Register.Msg
   | Login Components.Login.Msg
+  | Home Components.Home.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg)
@@ -81,10 +88,18 @@ update msg model =
           , globals = updateResult.globals}
       in
         newModel ! [ Cmd.map Login updateResult.cmd ]
+    Home hmsg ->
+      let
+        newModelAndCommand = Components.Home.update hmsg model.home model.globals
+        newModel = fst newModelAndCommand
+        newCommand = snd newModelAndCommand
+      in
+        { model | home = newModel } ! [Cmd.map Home newCommand]
 
 
 urlUpdate : Page -> Model -> ( Model, Cmd Msg)
-urlUpdate page model = ({ model | currentPage = page}, Cmd.none)
+urlUpdate page model =
+  ({ model | currentPage = page}, commandForPage model page)
 
 
 locationParser : Navigation.Parser Page
@@ -126,7 +141,9 @@ view model =
           [ div [ class "content" ]
             [ case model.currentPage of
                   HomePage ->
-                    text "Homepage"
+                    model.home
+                      |> Components.Home.view
+                      |> Html.map Home
                   RegisterPage ->
                     model.register
                       |> Components.Register.view
