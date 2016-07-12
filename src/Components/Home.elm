@@ -78,7 +78,17 @@ view model =
   div [ class "row" ][
     div [ class "col-xs-1" ] [],
     div [ class "col-xs-8" ]
-      [ text <| toString model.balance
-      ],
+    [
+      div [class "lead" ][text "Current balance: ", text <| formatBalance model.balance]
+
+    ],
     div [ class "col-xs-1" ] [ ]
   ]
+
+formatBalance :  Maybe Float -> String
+formatBalance balance =
+  case balance of
+    Just value ->
+      (toString value) ++ " " ++ Config.currency
+    Nothing ->
+      "No data yet"
