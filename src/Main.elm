@@ -1,5 +1,6 @@
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
 import Html.App as Html
 import Navigation
 import UrlParser
@@ -70,6 +71,7 @@ commandForPage model page =
 type Msg = Register Components.Register.Msg
   | Login Components.Login.Msg
   | Home Components.Home.Msg
+  | Logout
 
 
 update : Msg -> Model -> ( Model, Cmd Msg)
@@ -95,6 +97,8 @@ update msg model =
         newCommand = snd newModelAndCommand
       in
         { model | home = newModel } ! [Cmd.map Home newCommand]
+    Logout ->
+      { model | globals = { username = "", apiToken = ""} } ! []
 
 
 urlUpdate : Page -> Model -> ( Model, Cmd Msg)
@@ -162,25 +166,18 @@ view model =
 navBar : Model -> Html Msg
 navBar model =
   let
-    topRightText =
+    usernameText =
       if String.length model.globals.username > 0
         then "Hello, " ++ model.globals.username
         else ""
+    logoutElement = if String.length model.globals.apiToken > 0
+      then li [] [a [ href "", onClick Logout ] [ text "Logout" ]]
+      else text ""
   in
     nav [ class "navbar navbar-default navbar-fixed-top" ]
         [ div [ class "container" ]
             [ div [ class "navbar-header" ]
-                [ button [ attribute "aria-controls" "navbar", attribute "aria-expanded" "false", class "navbar-toggle collapsed", attribute "data-target" "#navbar", attribute "data-toggle" "collapse", type' "button" ]
-                    [ span [ class "sr-only" ]
-                        [ text "Toggle navigation" ]
-                    , span [ class "icon-bar" ]
-                        []
-                    , span [ class "icon-bar" ]
-                        []
-                    , span [ class "icon-bar" ]
-                        []
-                    ]
-                , a [ class "navbar-brand", href "#" ]
+                [  a [ class "navbar-brand", href "#" ]
                     [ text "bnk" ]
                 ],
                 div [ class "navbar-collapse collapse", id "navbar" ]
@@ -196,8 +193,10 @@ navBar model =
                       ]
                   , ul [ class "nav navbar-nav navbar-right" ]
                       [ li []
-                        [span [ class "navbar-brand" ] [ text topRightText ]]
+                        [span [ class "navbar-brand" ] [ text usernameText ]]
+                      , logoutElement
                       ]
+
                   ]
             ]
         ]
