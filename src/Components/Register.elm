@@ -98,15 +98,29 @@ update msg model =
       in
         model ! [ command ]
     RegistrationCompleted response ->
-      { model | wasRegistrationSuccessfull = response.data } ! [ Navigation.newUrl "#login" ]
+      { model |
+        wasRegistrationSuccessfull = response.data
+      , password = ""
+      , passwordConfirm = ""
+      }
+      ! [ Navigation.newUrl "#login" ]
     RegistrationCompletedWithPhase response ->
       let
         wasSuccessfull = fst response.data
         phrase = snd response.data
       in
-      { model | wasRegistrationSuccessfull = wasSuccessfull, phrase = phrase } ! []
+        { model |
+          wasRegistrationSuccessfull = wasSuccessfull
+        , phrase = phrase
+        , password = ""
+        , passwordConfirm = ""
+        } ! []
     RegistriationFailed error ->
-      { model | conncectionError = Just error } ! []
+      { model |
+        conncectionError = Just error
+        , password = ""
+        , passwordConfirm = ""
+      } ! []
 
 
 
