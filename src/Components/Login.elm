@@ -62,11 +62,11 @@ update msg model global =
      , globals = global
      , cmd = login model }
     LoginFailed error ->
-     { model = { model | httpError = Just error }
+     { model = { model | httpError = Just error, password = "" }
      , globals = global
      , cmd = Cmd.none }
     LoginSuccessful token ->
-     { model = model
+     { model = { model | password = "" }
      , globals = { global | apiToken = token.data , username = model.username }
      , cmd = Navigation.newUrl "#home" }
 
