@@ -12,6 +12,7 @@ import Globals
 import Components.Register
 import Components.Login
 import Components.Home
+import Components.Settings
 
 -- APP
 
@@ -32,12 +33,14 @@ main =
 type Page = HomePage
   | RegisterPage
   | LoginPage
+  | SettingsPage
 
 
 type alias Model =
   { register : Components.Register.Model
   , login : Components.Login.Model
   , home : Components.Home.Model
+  , settings : Components.Settings.Model
   , globals : Globals.Model
   , currentPage : Page
   }
@@ -50,6 +53,7 @@ init page =
       { register = Components.Register.initialModel
       , login = Components.Login.initialModel
       , home = Components.Home.initialModel
+      , settings = Components.Settings.initialModel
       , globals = Globals.initialModel
       , currentPage = page
       }
@@ -63,6 +67,8 @@ commandForPage model page =
   case page of
     HomePage ->
       Cmd.map Home <| Components.Home.urlChange model.globals
+    SettingsPage ->
+      Cmd.map Settings <| Components.Settings.urlChange model.globals
     _ ->
       Cmd.none
 
@@ -71,6 +77,7 @@ commandForPage model page =
 type Msg = Register Components.Register.Msg
   | Login Components.Login.Msg
   | Home Components.Home.Msg
+  | Settings Components.Settings.Msg
   | Logout
 
 
@@ -97,8 +104,17 @@ update msg model =
         newCommand = snd newModelAndCommand
       in
         { model | home = newModel } ! [Cmd.map Home newCommand]
+    Settings smdg ->
+      let
+        updateResult = Components.Settings.update smdg model.settings model.globals
+        newModel =
+          { model | settings = updateResult.model
+          , globals = updateResult.globals}
+      in
+        newModel ! [ Cmd.map Settings updateResult.cmd ]
     Logout ->
       { model | globals = { username = "", apiToken = ""} } ! []
+
 
 
 urlUpdate : Page -> Model -> ( Model, Cmd Msg)
@@ -117,6 +133,7 @@ matchers =
     , UrlParser.format HomePage (UrlParser.s "home")
     , UrlParser.format RegisterPage (UrlParser.s "register")
     , UrlParser.format LoginPage (UrlParser.s "login")
+    , UrlParser.format SettingsPage (UrlParser.s "settings")
     ]
 
 
@@ -156,6 +173,10 @@ view model =
                     model.login
                       |> Components.Login.view
                       |> Html.map Login
+                  SettingsPage ->
+                    model.settings
+                      |> Components.Settings.view
+                      |> Html.map Settings
                 , hr [] []
                 , text (toString model)
             ]
@@ -173,6 +194,10 @@ navBar model =
     logoutElement = if String.length model.globals.apiToken > 0
       then li [] [a [ href "", onClick Logout ] [ text "Logout" ]]
       else text ""
+    settingsElement = if String.length model.globals.apiToken > 0
+      then li [ class <| if model.currentPage == SettingsPage then "active" else "" ]
+            [ a [ href "#settings" ] [ text "Settings" ] ]
+      else text ""
   in
     nav [ class "navbar navbar-default navbar-fixed-top" ]
         [ div [ class "container" ]
@@ -182,10 +207,11 @@ navBar model =
                 ],
                 div [ class "navbar-collapse collapse", id "navbar" ]
                   [ ul [ class "nav navbar-nav" ]
-                      [ li [ class "active" ]
+                      [ li [ class <| if model.currentPage == HomePage then "active" else "" ]
                           [ a [ href "#" ]
                               [ text "Home" ]
                           ]
+                      , settingsElement
                       , li []
                           [ a [ href "#" ]
                               [ text "Contact" ]
