@@ -7,7 +7,7 @@ var zxcvbn =  require('zxcvbn');
 var Elm = require( './Main' );
 
 var storedState = localStorage.getItem('globals');
-var startingState = storedState ? JSON.parse(storedState) : {apiToken : "", username: ""};
+var startingState = storedState ? JSON.parse(storedState) : {apiToken : "", username: "", endpoint: "https://bnk.lschuermann.xyz"};
 
 var app = Elm.Main.embed( document.getElementById( 'main' ),  startingState);
 app.ports.checkPassword.subscribe(function(password){

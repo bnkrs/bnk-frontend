@@ -12,7 +12,6 @@ import Regex
 
 -- import Utils.HttpUtils exposing (httpErrorToString)
 import Globals
-import Config
 
 
 -- MODEL
@@ -182,9 +181,9 @@ getSettings global =
 
 
 doGetSettings : Globals.Model -> Task.Task (Error String) (Response GetSettingsResponse)
-doGetSettings global=
+doGetSettings global =
   let
-    baseUrl = Config.rootUrl ++ "/user/settings"
+    baseUrl = global.endpoint ++ "/user/settings"
     urlWithParams = HttpBuilder.url baseUrl [("token", global.apiToken)]
     successReader =
       jsonReader
@@ -209,7 +208,7 @@ postSettings model globals =
 doPostSettings : Model -> Globals.Model -> Task.Task (Error String) (Response (List String))
 doPostSettings model global =
   let
-    baseUrl = Config.rootUrl ++ "/user/settings"
+    baseUrl = global.endpoint ++ "/user/settings"
     successReader =
       jsonReader (JD.oneOf ["phrase" :=  (JD.list JD.string), JD.succeed []] )
     failReader = jsonReader ( JD.at ["error"] ("message" := JD.string ))

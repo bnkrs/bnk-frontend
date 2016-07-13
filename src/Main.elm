@@ -88,7 +88,7 @@ update msg model =
   case msg of
     Register rmsg ->
       let
-        newRegisterModel = Components.Register.update rmsg model.register
+        newRegisterModel = Components.Register.update rmsg model.register model.globals
       in
         { model | register = fst newRegisterModel } ! [ Cmd.map Register ( snd newRegisterModel ) ]
     Login lmsg ->

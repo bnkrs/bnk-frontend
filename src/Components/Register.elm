@@ -11,9 +11,9 @@ import Task
 import Maybe
 import Navigation
 import HttpBuilder exposing (..)
+import Globals
 
 import Utils.HttpUtils exposing (httpErrorToString)
-import Config
 
 
 -- MODEL
@@ -72,8 +72,8 @@ type Msg = ChangeUsername String
   | RegistriationFailed (Error String)
 
 
-update : Msg -> Model -> (Model, Cmd Msg)
-update msg model =
+update : Msg -> Model -> Globals.Model -> (Model, Cmd Msg)
+update msg model globals =
   case msg of
     ChangeUsername name ->
       { model | username = name } ! []
@@ -93,8 +93,8 @@ update msg model =
       let
         command =
           if not <|emailEmpty model
-            then registerUserWithEmail model
-            else registerUserWithPhrase model
+            then registerUserWithEmail model globals
+            else registerUserWithPhrase model globals
       in
         model ! [ command ]
     RegistrationCompleted response ->
@@ -124,26 +124,26 @@ update msg model =
 
 
 
-registerUserWithEmail : Model -> Cmd Msg
-registerUserWithEmail model =
+registerUserWithEmail : Model -> Globals.Model -> Cmd Msg
+registerUserWithEmail model globals =
   Task.perform
     RegistriationFailed
     RegistrationCompleted
-    (doMailRegister model)
+    (doMailRegister model globals)
 
 
-registerUserWithPhrase : Model -> Cmd Msg
-registerUserWithPhrase model =
+registerUserWithPhrase : Model -> Globals.Model -> Cmd Msg
+registerUserWithPhrase model globals =
   Task.perform
     RegistriationFailed
     RegistrationCompletedWithPhase
-    (doPhraseRegister model)
+    (doPhraseRegister model globals)
 
 
-doMailRegister : Model -> Task.Task (Error String) (Response Bool)
-doMailRegister model  =
+doMailRegister : Model -> Globals.Model -> Task.Task (Error String) (Response Bool)
+doMailRegister model globals =
   let
-    registerUrl = Config.rootUrl ++ "/user/new"
+    registerUrl = globals.endpoint ++ "/user/new"
     registerSuccessReader = jsonReader ("success" := JD.bool)
     registerFailReader = jsonReader ( JD.at ["error"] ("message" := JD.string ))
     body = modelToJson model
@@ -154,10 +154,10 @@ doMailRegister model  =
       |> send registerSuccessReader registerFailReader
 
 
-doPhraseRegister : Model -> Task.Task (Error String) (Response (Bool, List String))
-doPhraseRegister model  =
+doPhraseRegister : Model -> Globals.Model -> Task.Task (Error String) (Response (Bool, List String))
+doPhraseRegister model globals =
   let
-    registerUrl = Config.rootUrl ++ "/user/new"
+    registerUrl = globals.endpoint ++ "/user/new"
     registerFailReader = jsonReader ( JD.at ["error"] ("message" := JD.string ))
     registerSuccessReader =
       jsonReader <| JD.object2 (,) ("success" := JD.bool) ("phrase" := JD.list JD.string)

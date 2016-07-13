@@ -10,9 +10,8 @@ import Maybe
 import Task
 import Navigation
 
-import Utils.HttpUtils exposing (httpErrorToString)
 import Globals
-import Config
+import Utils.HttpUtils exposing (httpErrorToString)
 
 
 -- MODEL
@@ -63,7 +62,7 @@ update msg model global =
     Login ->
      { model = model
      , globals = global
-     , cmd = login model }
+     , cmd = login model global }
     LoginFailed error ->
      { model = { model | httpError = Just error, password = "" }
      , globals = global
@@ -83,18 +82,18 @@ update msg model global =
 
 
 
-login : Model -> Cmd Msg
-login model =
+login : Model -> Globals.Model -> Cmd Msg
+login model global =
     Task.perform
       LoginFailed
       LoginSuccessful
-      (doLogin model)
+      (doLogin model global)
 
 
-doLogin : Model -> Task.Task (Error String) (Response String)
-doLogin model =
+doLogin : Model -> Globals.Model -> Task.Task (Error String) (Response String)
+doLogin model global =
   let
-    loginUrl = Config.rootUrl ++ "/auth/getToken"
+    loginUrl = global.endpoint ++ "/auth/getToken"
     loginSuccessReader = jsonReader ( "token" := JD.string )
     loginFailReader = jsonReader ( JD.at ["error"] ("message" := JD.string ))
     body = modelToJson model

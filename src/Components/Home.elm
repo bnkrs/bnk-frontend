@@ -7,8 +7,6 @@ import Json.Decode as JD exposing ((:=))
 import Html exposing (..)
 import Html.Attributes exposing (..)
 
-
-import Config
 -- import Utils.HttpUtils exposing (httpErrorToString)
 
 
@@ -62,7 +60,7 @@ requestBalance global =
 doBalanceRequest : Globals.Model -> Task.Task (Error String) (Response Int)
 doBalanceRequest global =
   let
-    baseUrl = Config.rootUrl ++ "/user/balance"
+    baseUrl = global.endpoint ++ "/user/balance"
     balanceUrl = HttpBuilder.url baseUrl [("token", global.apiToken)]
     successReader = jsonReader ( "balance" := JD.int )
     failReader = jsonReader ( JD.at ["error"] ("message" := JD.string ))
@@ -89,6 +87,6 @@ formatBalance :  Maybe Int -> String
 formatBalance balance =
   case balance of
     Just value ->
-      (toString <| (toFloat value) / 10) ++ " " ++ Config.currency
+      (toString <| (toFloat value) / 10) ++ " " ++ "€"
     Nothing ->
       "No data yet"
