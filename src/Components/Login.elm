@@ -143,13 +143,13 @@ modelToJson model =
 view : Model -> Html Msg
 view model =
     div [ class "row" ]
-        [ div [ class "col-xs-3" ] []
-        , div [ class "col-xs-6" ]
+        [ div [ class "col-sm-3" ] []
+        , div [ class "col-sm-6" ]
             [ errorView model
             , formView model
             , a [ href "#register", class "text-center lead" ] [ text "No account? Register Here!" ]
             ]
-        , div [ class "col-xs-3" ] []
+        , div [ class "col-sm-3" ] []
         ]
 
 
