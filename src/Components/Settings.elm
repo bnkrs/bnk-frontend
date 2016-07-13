@@ -3,7 +3,7 @@ import Html exposing (..)
 import Html.Events exposing (onClick, onCheck, onInput)
 import Html.Attributes exposing (..)
 import Json.Decode as JD exposing ((:=))
--- import Json.Encode as JE
+import Json.Encode as JE
 import HttpBuilder exposing (..)
 import Maybe
 import Task
@@ -18,13 +18,16 @@ import Config
 -- MODEL
 
 type alias Model =
-  { transactionLogging : TransactionLogging
+  { isTransactionLoggingEnabled : Bool
   , recoveryMethod : RecoveryMethod
   , email : String
+  , phrase : List String
   , httpError: Maybe (Error String)
   }
 
+
 type RecoveryMethod = EMail | Phrase | UnknownRecoveryMethod
+
 
 recoveryMethodFromString : String -> RecoveryMethod
 recoveryMethodFromString str =
@@ -32,13 +35,16 @@ recoveryMethodFromString str =
     then EMail
     else Phrase
 
-type TransactionLogging = Enabled | Disabled | UnknownTransactionLoggingsStatus
 
-transactionLoggingFromBool : Bool -> TransactionLogging
-transactionLoggingFromBool bo =
-  if bo
-    then Enabled
-    else Disabled
+toString : RecoveryMethod -> String
+toString method =
+  case method of
+    EMail ->
+      "email"
+    Phrase ->
+      "phrase"
+    UnknownRecoveryMethod ->
+      "unknown"
 
 type alias GetSettingsResponse =
   {
@@ -47,13 +53,24 @@ type alias GetSettingsResponse =
   , email : String
   }
 
+
 initialModel : Model
 initialModel =
-  { transactionLogging = UnknownTransactionLoggingsStatus
+  { isTransactionLoggingEnabled = False
   , recoveryMethod = UnknownRecoveryMethod
   , email = ""
+  , phrase = []
   , httpError = Nothing
   }
+
+
+modelToJson : Model -> Globals.Model -> JE.Value
+modelToJson model globals =
+    JE.object
+      [ ("token", JE.string globals.apiToken)
+      , ("transactionLogging", JE.bool model.isTransactionLoggingEnabled)
+      , ("recoveryMethod", JE.string (toString model.recoveryMethod))
+      , ("email", JE.string model.email) ]
 
 
 -- UPDATE
@@ -67,6 +84,8 @@ urlChange model =
 
 type Msg = GetSettingsFailed (Error String)
   | GetSettingSuccessful (Response GetSettingsResponse)
+  | PostSettingsFailed (Error String)
+  | PostSettingsSuccessful (Response (List String))
   | Save
   | ToggleTransacionLogging Bool
   | ActivateTransactionLogging
@@ -92,37 +111,45 @@ update msg model global =
       , cmd = Cmd.none }
     GetSettingSuccessful result ->
       let
-        logging = transactionLoggingFromBool result.data.transactionLogging
+        logging = result.data.transactionLogging
         recovery = recoveryMethodFromString result.data.recoveryMethod
         email = result.data.email
       in
         { model =
           { model
-            | transactionLogging = logging
+            | isTransactionLoggingEnabled = logging
             , recoveryMethod = recovery
             , email = email
           }
         , globals = global
         , cmd = Cmd.none
         }
+    PostSettingsFailed error ->
+      { model = { model | httpError = Just error }
+      , globals = global
+      , cmd = Cmd.none }
+    PostSettingsSuccessful result ->
+      { model = { model | phrase = result.data }
+      , globals = global
+      , cmd = Cmd.none }
     Save ->
-      { model = model, globals = global, cmd = Cmd.none }
+      { model = model, globals = global, cmd = postSettings model global }
     ToggleTransacionLogging enabled ->
       { model =
         { model
-        | transactionLogging = transactionLoggingFromBool enabled
+        | isTransactionLoggingEnabled = enabled
         },
         globals = global, cmd = Cmd.none
       }
     ActivateTransactionLogging ->
       {
-        model = { model | transactionLogging = Enabled }
+        model = { model | isTransactionLoggingEnabled = True }
       , globals = global
       , cmd = Cmd.none
       }
     DeactivateTransactionLogging ->
       {
-        model = { model | transactionLogging = Disabled }
+        model = { model | isTransactionLoggingEnabled = False }
       , globals = global
       , cmd = Cmd.none
       }
@@ -144,8 +171,6 @@ update msg model global =
       , globals = global
       , cmd = Cmd.none
       }
-
-
 
 
 getSettings : Globals.Model -> Cmd Msg
@@ -172,6 +197,29 @@ doGetSettings global=
     HttpBuilder.get urlWithParams
       |> send successReader failReader
 
+
+postSettings : Model -> Globals.Model -> Cmd Msg
+postSettings model globals =
+    Task.perform
+      PostSettingsFailed
+      PostSettingsSuccessful
+      (doPostSettings model globals)
+
+
+doPostSettings : Model -> Globals.Model -> Task.Task (Error String) (Response (List String))
+doPostSettings model global =
+  let
+    baseUrl = Config.rootUrl ++ "/user/settings"
+    urlWithParams = HttpBuilder.url baseUrl [("token", global.apiToken)]
+    successReader =
+      jsonReader (JD.oneOf ["phrase" :=  (JD.list JD.string), JD.succeed []] )
+    failReader = jsonReader ( JD.at ["error"] ("message" := JD.string ))
+    body = modelToJson model global
+  in
+    HttpBuilder.post urlWithParams
+      |> withJsonBody body
+      |> withHeader "Content-Type" "application/json"
+      |> send successReader failReader
 
 
 -- VIEW
@@ -208,22 +256,22 @@ formView model =
 transactionLoggingCheckbox : Model -> Html Msg
 transactionLoggingCheckbox model =
   let
-    activateButtonClass= if model.transactionLogging == Enabled then "active" else ""
-    deactivateButtonClass = if model.transactionLogging == Disabled then "active" else ""
+    activateLoggingButtonClass= if  model.isTransactionLoggingEnabled then "active" else ""
+    deactivateLoggingButtonClass = if not model.isTransactionLoggingEnabled  then "active" else ""
   in
     div [ class <| "form-group"]
         [ label [ for "userName" ][ text "Transaction Logging" ]
         , div []
           [
               div [ class "btn-group", attribute "role" "group" ]
-              [ button [ class <| "btn btn-default " ++ deactivateButtonClass
-                  , type' "button"
-                  , onClick DeactivateTransactionLogging ]
-                  [ text "Record all transactions on server" ]
-              , button [ class <| "btn btn-default " ++  activateButtonClass
+              [ button [ class <| "btn btn-default " ++ activateLoggingButtonClass
                   , type' "button"
                   , onClick ActivateTransactionLogging ]
-                  [ text "Do not record transactions" ]
+                  [ text "Record all transactions on server" ]
+              , button [ class <| "btn btn-default " ++  deactivateLoggingButtonClass
+                  , type' "button"
+                  , onClick DeactivateTransactionLogging ]
+                  [ text "Do not record transactions on server" ]
               ]
           ]
         ]
@@ -252,6 +300,7 @@ recoveryMethodDropdown model =
           ]
         ]
 
+
 emailField : Model -> Html Msg
 emailField model =
   div [ class <| "form-group"]
@@ -265,9 +314,11 @@ emailField model =
           []
       ]
 
+
 modelValid : Model -> Bool
 modelValid model =
   model.recoveryMethod == Phrase || emailValid model
+
 
 emailValid : Model -> Bool
 emailValid model =
