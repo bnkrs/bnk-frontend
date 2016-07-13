@@ -8,7 +8,7 @@ httpErrorToString error =
     case error of
         UnexpectedPayload str ->
             """ Internal Error!
-          You can't do anything about this, contact someone who does tech stuff!
+          You can't do anything about this, contact someone who administrates your BNK installation!
       """
 
         NetworkError ->
