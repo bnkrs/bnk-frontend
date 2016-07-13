@@ -194,6 +194,7 @@ formView model =
                     , type' "password"
                     , onInput ChangePassword
                     , onEnter Login
+                    , value model.password
                     ]
                     []
                 ]
