@@ -142,14 +142,14 @@ formView model =
         [ div [ class <| "form-group"]
             [ label [ for "userName" ]
                 [ text "Username" ]
-            , input [ class "form-control", id "userName"
+            , input [ class "form-control"
               , placeholder "Username", type' "text", onInput ChangeUsername ]
                 []
             ]
         , div [ class <| "form-group"]
             [ label [ for "password" ]
                 [ text "Password" ]
-            , input [ class "form-control", id "password"
+            , input [ class "form-control"
               , placeholder "Password", type' "password"
               , onInput ChangePassword ]
                 []
