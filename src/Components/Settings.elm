@@ -271,9 +271,25 @@ view model =
     div [ class "row" ]
         [ div [ class "col-xs-3" ] []
         , div [ class "col-xs-6" ]
-            [ formView model ]
+            [ errorView model, formView model ]
         , div [ class "col-xs-3" ] []
         ]
+
+
+errorView : Model -> Html Msg
+errorView model =
+    case model.httpError of
+        Just error ->
+            div [ class "alert alert-danger", attribute "role" "alert" ]
+                [ span [ attribute "aria-hidden" "true", class "glyphicon glyphicon-exclamation-sign" ]
+                    []
+                , span [ class "sr-only" ]
+                    [ text "Error:" ]
+                , text (" " ++ (httpErrorToString error))
+                ]
+
+        Nothing ->
+            text ""
 
 
 formView : Model -> Html Msg
