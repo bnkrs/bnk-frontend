@@ -210,13 +210,12 @@ doPostSettings : Model -> Globals.Model -> Task.Task (Error String) (Response (L
 doPostSettings model global =
   let
     baseUrl = Config.rootUrl ++ "/user/settings"
-    urlWithParams = HttpBuilder.url baseUrl [("token", global.apiToken)]
     successReader =
       jsonReader (JD.oneOf ["phrase" :=  (JD.list JD.string), JD.succeed []] )
     failReader = jsonReader ( JD.at ["error"] ("message" := JD.string ))
     body = modelToJson model global
   in
-    HttpBuilder.post urlWithParams
+    HttpBuilder.post baseUrl
       |> withJsonBody body
       |> withHeader "Content-Type" "application/json"
       |> send successReader failReader
