@@ -254,10 +254,11 @@ navBar model =
         nav [ class "navbar navbar-default navbar-fixed-top" ]
             [ div [ class "container" ]
                 [ div [ class "navbar-header" ]
-                    [ a [ class "navbar-brand", href "#" ]
+                    [ a
+                        [ class "navbar-brand", href "#" ]
                         [ text "bnk" ]
                     ]
-                , div [ class "navbar-collapse collapse", id "navbar" ]
+                , div [ class "navbar" ]
                     [ ul [ class "nav navbar-nav" ]
                         [ li
                             [ class <|
@@ -270,11 +271,11 @@ navBar model =
                                 [ text "Home" ]
                             ]
                         , settingsElement
+                        , logoutElement
                         ]
-                    , ul [ class "nav navbar-nav navbar-right" ]
+                    , ul [ class "nav navbar-nav navbar-collapse navbar-right collapse" ]
                         [ li []
                             [ span [ class "navbar-brand" ] [ text usernameText ] ]
-                        , logoutElement
                         ]
                     ]
                 ]
