@@ -16,9 +16,9 @@ import Components.Settings
 
 -- APP
 
-main : Program Never
+main : Program Globals.Model
 main =
-  Navigation.program
+  Navigation.programWithFlags
     locationParser
     { init = init
     , view = view
@@ -46,15 +46,15 @@ type alias Model =
   }
 
 
-init : Page -> ( Model, Cmd Msg )
-init page =
+init : Globals.Model -> Page -> ( Model, Cmd Msg )
+init globals page =
   let
     model =
       { register = Components.Register.initialModel
       , login = Components.Login.initialModel
       , home = Components.Home.initialModel
       , settings = Components.Settings.initialModel
-      , globals = Globals.initialModel
+      , globals = globals
       , currentPage = page
       }
     command = commandForPage model page

@@ -1,4 +1,4 @@
-module Components.Login exposing (..)
+port module Components.Login exposing (..)
 import Html exposing (..)
 import Html.Events exposing (onInput, onFocus, onClick, on, keyCode)
 import Html.Attributes exposing (..)
@@ -30,6 +30,8 @@ initialModel =
   , password = ""
   , httpError = Nothing
   }
+
+port saveToLocalstorage : Globals.Model -> Cmd msg
 
 
 -- UPDATE
@@ -67,9 +69,12 @@ update msg model global =
      , globals = global
      , cmd = Cmd.none }
     LoginSuccessful token ->
-     { model = { model | password = "" }
-     , globals = { global | apiToken = token.data , username = model.username }
-     , cmd = Navigation.newUrl "#home" }
+      let
+        newGlobals = { global | apiToken = token.data , username = model.username }
+      in
+       { model = { model | password = "" }
+       , globals = newGlobals
+       , cmd = Cmd.batch [saveToLocalstorage newGlobals, Navigation.newUrl "#home"] }
     NoOp ->
      { model = model
      , globals = global
