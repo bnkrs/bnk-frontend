@@ -1,6 +1,6 @@
 module Components.Login exposing (..)
 import Html exposing (..)
-import Html.Events exposing (onInput, onFocus, onClick)
+import Html.Events exposing (onInput, onFocus, onClick, on, keyCode)
 import Html.Attributes exposing (..)
 import String
 import Json.Decode as JD exposing ((:=))
@@ -39,6 +39,7 @@ type Msg = ChangeUsername String
   | Login
   | LoginFailed (Error String)
   | LoginSuccessful (Response String)
+  | NoOp
 
 type alias UpdateResult =
   { model : Model
@@ -69,6 +70,11 @@ update msg model global =
      { model = { model | password = "" }
      , globals = { global | apiToken = token.data , username = model.username }
      , cmd = Navigation.newUrl "#home" }
+    NoOp ->
+     { model = model
+     , globals = global
+     , cmd = Cmd.none }
+
 
 
 
@@ -151,7 +157,8 @@ formView model =
                 [ text "Password" ]
             , input [ class "form-control"
               , placeholder "Password", type' "password"
-              , onInput ChangePassword ]
+              , onInput ChangePassword
+              , onEnter Login ]
                 []
             ]
         , button [ class "btn btn-primary", type' "submit"
@@ -164,3 +171,11 @@ formView model =
 
 isValid : Model -> Bool
 isValid model = (String.length model.username) > 0 && (String.length model.password > 6)
+
+onEnter : Msg -> Attribute Msg
+onEnter msg =
+  let
+    tagger code =
+      if code == 13 then msg else NoOp
+  in
+    on "keydown" (JD.map tagger keyCode)
