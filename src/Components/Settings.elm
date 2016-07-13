@@ -10,10 +10,7 @@ import Maybe
 import Task
 import Navigation
 import Regex
-
-
--- import Utils.HttpUtils exposing (httpErrorToString)
-
+import Utils.HttpUtils exposing (httpErrorToString, isTokenExpired)
 import Globals
 
 
@@ -122,7 +119,11 @@ update msg model global =
         GetSettingsFailed error ->
             { model = { model | httpError = Just error }
             , globals = global
-            , cmd = Cmd.none
+            , cmd =
+                if isTokenExpired error then
+                    Navigation.newUrl "#login"
+                else
+                    Cmd.none
             }
 
         GetSettingSuccessful result ->

@@ -7,9 +7,10 @@ import Task
 import Json.Decode as JD exposing ((:=))
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Navigation
+import Utils.HttpUtils exposing (httpErrorToString, isTokenExpired)
 
 
--- import Utils.HttpUtils exposing (httpErrorToString)
 -- MODEL
 
 
@@ -43,7 +44,12 @@ update msg model global =
             model ! [ requestBalance global ]
 
         BalanceRequestFailed error ->
-            { model | httpError = Just error } ! []
+            { model | httpError = Just error }
+                ! [ if isTokenExpired error then
+                        Navigation.newUrl "#login"
+                    else
+                        Cmd.none
+                  ]
 
         BalanceRequestSuccessfull result ->
             { model | balance = Just result.data } ! []

@@ -31,5 +31,16 @@ httpErrorToString error =
 
                 _ ->
                     toString response.data
+
+
+isTokenExpired : HttpBuilder.Error String -> Bool
+isTokenExpired error =
+    case error of
+        BadResponse response ->
+            if response.data == "NotAuthenticated" then
+                True
             else
-                toString response.data
+                False
+
+        _ ->
+            False
