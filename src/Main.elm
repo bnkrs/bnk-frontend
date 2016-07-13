@@ -212,10 +212,6 @@ navBar model =
                               [ text "Home" ]
                           ]
                       , settingsElement
-                      , li []
-                          [ a [ href "#" ]
-                              [ text "Contact" ]
-                          ]
                       ]
                   , ul [ class "nav navbar-nav navbar-right" ]
                       [ li []
