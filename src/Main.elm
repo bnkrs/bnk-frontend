@@ -258,25 +258,21 @@ navBar model =
                         [ class "navbar-brand", href "#" ]
                         [ text "bnk" ]
                     ]
-                , div [ class "navbar" ]
-                    [ ul [ class "nav navbar-nav" ]
-                        [ li
-                            [ class <|
-                                if model.currentPage == HomePage then
-                                    "active"
-                                else
-                                    ""
-                            ]
-                            [ a [ href "#" ]
-                                [ text "Home" ]
-                            ]
-                        , settingsElement
-                        , logoutElement
+                , ul [ class "nav navbar-nav" ]
+                    [ li
+                        [ class <|
+                            if model.currentPage == HomePage then
+                                "active"
+                            else
+                                ""
                         ]
-                    , ul [ class "nav navbar-nav navbar-collapse navbar-right collapse" ]
-                        [ li []
-                            [ span [ class "navbar-brand" ] [ text usernameText ] ]
+                        [ a [ href "#" ]
+                            [ text "Home" ]
                         ]
+                    , settingsElement
+                    ]
+                , ul [ class "nav navbar-nav navbar-right " ]
+                    [ logoutElement
                     ]
                 ]
             ]
