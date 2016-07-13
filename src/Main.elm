@@ -145,7 +145,7 @@ update msg model =
 
         Logout ->
             { model | globals = Globals.initialModel }
-                ! [ Components.Login.saveToLocalstorage Globals.initialModel ]
+                ! [ Components.Login.saveToLocalstorage <| Globals.logout model.globals ]
 
 
 urlUpdate : Page -> Model -> ( Model, Cmd Msg )
