@@ -29,7 +29,7 @@ type alias Model =
     , passwordScore : Int
     , phrase : List String
     , wasRegistrationSuccessfull : Bool
-    , conncectionError : Maybe (Error String)
+    , httpError : Maybe (Error String)
     }
 
 
@@ -45,7 +45,7 @@ initialModel =
     , passwordScore = 0
     , phrase = []
     , wasRegistrationSuccessfull = False
-    , conncectionError = Maybe.Nothing
+    , httpError = Maybe.Nothing
     }
 
 
@@ -137,7 +137,7 @@ update msg model globals =
 
         RegistriationFailed error ->
             { model
-                | conncectionError = Just error
+                | httpError = Just error
                 , password = ""
                 , passwordConfirm = ""
             }
@@ -234,7 +234,7 @@ view model =
 
 errorView : Model -> Html Msg
 errorView model =
-    case model.conncectionError of
+    case model.httpError of
         Just error ->
             div [ class "alert alert-danger", attribute "role" "alert" ]
                 [ span [ attribute "aria-hidden" "true", class "glyphicon glyphicon-exclamation-sign" ]
