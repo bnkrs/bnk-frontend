@@ -28,6 +28,7 @@ main =
     }
 
 
+
 -- MODEL
 
 type Page = HomePage
@@ -44,6 +45,7 @@ type alias Model =
   , globals : Globals.Model
   , currentPage : Page
   }
+
 
 
 init : Globals.Model -> Page -> ( Model, Cmd Msg )
@@ -113,7 +115,8 @@ update msg model =
       in
         newModel ! [ Cmd.map Settings updateResult.cmd ]
     Logout ->
-      { model | globals = { username = "", apiToken = ""} } ! []
+      { model | globals = { username = "", apiToken = ""} }
+      ! [Components.Login.saveToLocalstorage Globals.initialModel]
 
 
 
