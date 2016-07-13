@@ -144,7 +144,7 @@ update msg model =
                 newModel ! [ Cmd.map Settings updateResult.cmd ]
 
         Logout ->
-            { model | globals = { username = "", apiToken = "" } }
+            { model | globals = Globals.initialModel }
                 ! [ Components.Login.saveToLocalstorage Globals.initialModel ]
 
 
