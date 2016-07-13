@@ -22,7 +22,14 @@ httpErrorToString error =
       """
 
         BadResponse response ->
-            if response.data == "UsernamePasswordWrong" then
-                "Wrong username or password!"
+            case response.data of
+                "UsernamePasswordWrong" ->
+                    "Wrong username or password!"
+
+                "UserExists" ->
+                    "An account with this username already exists"
+
+                _ ->
+                    toString response.data
             else
                 toString response.data
