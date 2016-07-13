@@ -15,7 +15,7 @@ import Config
 -- MODEL
 
 type alias Model =
-  { balance : Maybe Float
+  { balance : Maybe Int
   , httpError : Maybe (Error String)
   }
 
@@ -30,7 +30,7 @@ initialModel =
 
 type Msg = RequestBalance
   | BalanceRequestFailed (Error String)
-  | BalanceRequestSuccessfull (Response Float)
+  | BalanceRequestSuccessfull (Response Int)
 
 
 update : Msg -> Model -> Globals.Model -> (Model, Cmd Msg)
@@ -59,12 +59,12 @@ requestBalance global =
       (doBalanceRequest global)
 
 
-doBalanceRequest : Globals.Model -> Task.Task (Error String) (Response Float)
+doBalanceRequest : Globals.Model -> Task.Task (Error String) (Response Int)
 doBalanceRequest global =
   let
     baseUrl = Config.rootUrl ++ "/user/balance"
     balanceUrl = HttpBuilder.url baseUrl [("token", global.apiToken)]
-    successReader = jsonReader ( "balance" := JD.float )
+    successReader = jsonReader ( "balance" := JD.int )
     failReader = jsonReader ( JD.at ["error"] ("message" := JD.string ))
   in
     HttpBuilder.get balanceUrl
@@ -85,10 +85,10 @@ view model =
     div [ class "col-xs-1" ] [ ]
   ]
 
-formatBalance :  Maybe Float -> String
+formatBalance :  Maybe Int -> String
 formatBalance balance =
   case balance of
     Just value ->
-      (toString value) ++ " " ++ Config.currency
+      (toString <| (toFloat value) / 10) ++ " " ++ Config.currency
     Nothing ->
       "No data yet"
