@@ -30,4 +30,4 @@ npm run build
 ## Changelog
 **Ver 0.0.1**
 
-[dci]: https://dependencyci.com/github/splitrb/split/badge?style=flat
+[dci]: https://dependencyci.com/github/bnkrs/bnk-frontendbadge?style=flat
