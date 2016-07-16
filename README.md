@@ -1,5 +1,7 @@
 # bnk frontend
 
+![Dependancy CI status][dci]
+
 
 ## To install packages
 
@@ -27,3 +29,5 @@ npm run build
 
 ## Changelog
 **Ver 0.0.1**
+
+[dci]: https://dependencyci.com/github/splitrb/split/badge?style=flat
