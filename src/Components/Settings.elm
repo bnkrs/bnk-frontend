@@ -271,7 +271,7 @@ view model =
     div [ class "row" ]
         [ div [ class "col-sm-3" ] []
         , div [ class "col-sm-6" ]
-            [ errorView model, formView model ]
+            [ phraseView model, errorView model, formView model ]
         , div [ class "col-sm-3" ] []
         ]
 
@@ -290,6 +290,24 @@ errorView model =
 
         Nothing ->
             text ""
+
+
+phraseView : Model -> Html Msg
+phraseView model =
+    let
+        phaseSpans =
+            List.map (\str -> span [ class "phrase" ] [ text str ]) model.phrase
+    in
+        if List.length model.phrase == 0 then
+            text ""
+        else
+            div [ class "alert alert-success", attribute "role" "alert" ]
+                [ span [ attribute "aria-hidden" "true", class "glyphicon glyphicon-exclamation-sign" ]
+                    []
+                , text " Your recovery phrase:"
+                , div [ class "phrases" ] phaseSpans
+                , text "Please save this phrase somewhere, it will not be shown again!"
+                ]
 
 
 formView : Model -> Html Msg
