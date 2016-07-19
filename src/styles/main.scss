@@ -2,6 +2,7 @@ $icon-font-path: '~bootstrap-sass/assets/fonts/bootstrap/';
 @import '~bootstrap-sass/assets/stylesheets/bootstrap/mixins';
 @import '~bootstrap-sass/assets/stylesheets/bootstrap';
 
+$white: #fff;
 
 body {
   padding-top: 50px;
@@ -14,10 +15,10 @@ body {
 }
 
 .phrase {
-  background: #fff;
+  background: $white;
+  border-radius: .2rem;
   margin: .2rem;
   padding: .3rem;
-  border-radius: .2rem;
 }
 
 .phrases {
