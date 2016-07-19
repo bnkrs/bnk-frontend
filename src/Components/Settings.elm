@@ -40,8 +40,8 @@ recoveryMethodFromString str =
         Phrase
 
 
-toString : RecoveryMethod -> String
-toString method =
+recoveryMethodToString : RecoveryMethod -> String
+recoveryMethodToString method =
     case method of
         EMail ->
             "email"
@@ -75,7 +75,7 @@ modelToJson model globals =
     JE.object
         [ ( "token", JE.string globals.apiToken )
         , ( "transactionLogging", JE.bool model.isTransactionLoggingEnabled )
-        , ( "recoveryMethod", JE.string (toString model.recoveryMethod) )
+        , ( "recoveryMethod", JE.string (recoveryMethodToString model.recoveryMethod) )
         , ( "email", JE.string model.email )
         ]
 
