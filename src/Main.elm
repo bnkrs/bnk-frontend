@@ -150,7 +150,16 @@ update msg model =
 
 urlUpdate : Page -> Model -> ( Model, Cmd Msg )
 urlUpdate page model =
-    ( { model | currentPage = page }, commandForPage model page )
+    let
+        settings =
+            model.settings
+
+        newSettings =
+            { settings | phrase = [] }
+    in
+        ( { model | currentPage = page, settings = newSettings }
+        , commandForPage model page
+        )
 
 
 locationParser : Navigation.Parser Page
