@@ -1,5 +1,7 @@
 # bnk frontend
 
+[![Dependency Status](https://dependencyci.com/github/bnkrs/bnk-frontend/badge)](https://dependencyci.com/github/bnkrs/bnk-frontend)
+
 
 ## To install packages
 
@@ -27,3 +29,4 @@ npm run build
 
 ## Changelog
 **Ver 0.0.1**
+
