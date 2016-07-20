@@ -176,11 +176,8 @@ getSettings globals =
 doGetSettings : Globals.Model -> Task.Task (Error String) (Response GetSettingsResponse)
 doGetSettings globals =
     let
-        baseUrl =
-            globals.endpoint ++ "/user/settings"
-
         urlWithParams =
-            HttpBuilder.url baseUrl [ ( "token", globals.apiToken ) ]
+            HttpBuilder.url (globals.endpoint ++ "/user/settings") [ ( "token", globals.apiToken ) ]
 
         successReader =
             jsonReader <|
@@ -207,9 +204,6 @@ postSettings model globalss =
 doPostSettings : Model -> Globals.Model -> Task.Task (Error String) (Response (List String))
 doPostSettings model globals =
     let
-        baseUrl =
-            globals.endpoint ++ "/user/settings"
-
         successReader =
             jsonReader (JD.oneOf [ "phrase" := (JD.list JD.string), JD.succeed [] ])
 
@@ -219,7 +213,7 @@ doPostSettings model globals =
         body =
             modelToJson model globals
     in
-        HttpBuilder.post baseUrl
+        HttpBuilder.post (globals.endpoint ++ "/user/settings")
             |> withJsonBody body
             |> withHeader "Content-Type" "application/json"
             |> send successReader failReader
