@@ -267,7 +267,7 @@ formView model =
         , div [ class "panel-body" ]
             [ div [ class <| "form-group" ]
                 [ transactionLoggingCheckbox model
-                , recoveryMethodDropdown model
+                , recoveryMethodButtons model
                 , showIfTrue (model.recoveryMethod == EMail) (emailField model)
                 ]
             , button
@@ -304,8 +304,8 @@ transactionLoggingCheckbox model =
         ]
 
 
-recoveryMethodDropdown : Model -> Html Msg
-recoveryMethodDropdown model =
+recoveryMethodButtons : Model -> Html Msg
+recoveryMethodButtons model =
     div [ class <| "form-group" ]
         [ label [ for "userName" ]
             [ text "Recovery Method" ]
