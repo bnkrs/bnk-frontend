@@ -72,9 +72,9 @@ initialModel =
 
 
 modelToJson : Model -> Globals.Model -> JE.Value
-modelToJson model globals =
+modelToJson model globalss =
     JE.object
-        [ ( "token", JE.string globals.apiToken )
+        [ ( "token", JE.string globalss.apiToken )
         , ( "transactionLogging", JE.bool model.isTransactionLoggingEnabled )
         , ( "recoveryMethod", JE.string (recoveryMethodToString model.recoveryMethod) )
         , ( "email", JE.string model.email )
@@ -109,106 +109,78 @@ type Msg
 
 type alias UpdateResult =
     { model : Model
-    , globals : Globals.Model
+    , globalss : Globals.Model
     , cmd : Cmd Msg
     }
 
 
 update : Msg -> Model -> Globals.Model -> UpdateResult
-update msg model global =
+update msg model globals =
     case msg of
         GetSettingsFailed error ->
-            { model = { model | httpError = Just error }
-            , globals = global
-            , cmd =
-                if isTokenExpired error then
-                    Navigation.newUrl "#login"
-                else
-                    Cmd.none
-            }
+            let
+                cmd =
+                    if isTokenExpired error then
+                        Navigation.newUrl "#login"
+                    else
+                        Cmd.none
+            in
+                UpdateResult { model | httpError = Just error } globals cmd
 
         GetSettingSuccessful result ->
-            { model =
+            UpdateResult
                 { model
                     | isTransactionLoggingEnabled = result.data.transactionLogging
                     , recoveryMethod = recoveryMethodFromString result.data.recoveryMethod
                     , email = result.data.email
                 }
-            , globals = global
-            , cmd = Cmd.none
-            }
+                globals
+                Cmd.none
 
         PostSettingsFailed error ->
-            { model = { model | httpError = Just error }
-            , globals = global
-            , cmd = Cmd.none
-            }
+            UpdateResult { model | httpError = Just error } globals Cmd.none
 
         PostSettingsSuccessful result ->
-            { model = { model | phrase = result.data }
-            , globals = global
-            , cmd = Cmd.none
-            }
+            UpdateResult { model | phrase = result.data } globals Cmd.none
 
         Save ->
-            { model = model, globals = global, cmd = postSettings model global }
+            UpdateResult model globals (postSettings model globals)
 
         ToggleTransacionLogging enabled ->
-            { model =
-                { model
-                    | isTransactionLoggingEnabled = enabled
-                }
-            , globals = global
-            , cmd = Cmd.none
-            }
+            UpdateResult { model | isTransactionLoggingEnabled = enabled } globals Cmd.none
 
         ActivateTransactionLogging ->
-            { model = { model | isTransactionLoggingEnabled = True }
-            , globals = global
-            , cmd = Cmd.none
-            }
+            UpdateResult { model | isTransactionLoggingEnabled = True } globals Cmd.none
 
         DeactivateTransactionLogging ->
-            { model = { model | isTransactionLoggingEnabled = False }
-            , globals = global
-            , cmd = Cmd.none
-            }
+            UpdateResult { model | isTransactionLoggingEnabled = False } globals Cmd.none
 
         SetRecoveryMethodEmail ->
-            { model = { model | recoveryMethod = EMail }
-            , globals = global
-            , cmd = Cmd.none
-            }
+            UpdateResult { model | recoveryMethod = EMail } globals Cmd.none
 
         SetRecoveryMethodPhrase ->
-            { model = { model | recoveryMethod = Phrase }
-            , globals = global
-            , cmd = Cmd.none
-            }
+            UpdateResult { model | recoveryMethod = Phrase } globals Cmd.none
 
         UpdateEmail mail ->
-            { model = { model | email = mail }
-            , globals = global
-            , cmd = Cmd.none
-            }
+            UpdateResult { model | email = mail } globals Cmd.none
 
 
 getSettings : Globals.Model -> Cmd Msg
-getSettings global =
+getSettings globals =
     Task.perform
         GetSettingsFailed
         GetSettingSuccessful
-        (doGetSettings global)
+        (doGetSettings globals)
 
 
 doGetSettings : Globals.Model -> Task.Task (Error String) (Response GetSettingsResponse)
-doGetSettings global =
+doGetSettings globals =
     let
         baseUrl =
-            global.endpoint ++ "/user/settings"
+            globals.endpoint ++ "/user/settings"
 
         urlWithParams =
-            HttpBuilder.url baseUrl [ ( "token", global.apiToken ) ]
+            HttpBuilder.url baseUrl [ ( "token", globals.apiToken ) ]
 
         successReader =
             jsonReader <|
@@ -225,18 +197,18 @@ doGetSettings global =
 
 
 postSettings : Model -> Globals.Model -> Cmd Msg
-postSettings model globals =
+postSettings model globalss =
     Task.perform
         PostSettingsFailed
         PostSettingsSuccessful
-        (doPostSettings model globals)
+        (doPostSettings model globalss)
 
 
 doPostSettings : Model -> Globals.Model -> Task.Task (Error String) (Response (List String))
-doPostSettings model global =
+doPostSettings model globals =
     let
         baseUrl =
-            global.endpoint ++ "/user/settings"
+            globals.endpoint ++ "/user/settings"
 
         successReader =
             jsonReader (JD.oneOf [ "phrase" := (JD.list JD.string), JD.succeed [] ])
@@ -245,7 +217,7 @@ doPostSettings model global =
             jsonReader (JD.at [ "error" ] ("message" := JD.string))
 
         body =
-            modelToJson model global
+            modelToJson model globals
     in
         HttpBuilder.post baseUrl
             |> withJsonBody body
