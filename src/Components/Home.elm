@@ -9,6 +9,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Navigation
 import Utils.HttpUtils exposing (httpErrorToString, isTokenExpired)
+import Utils.HtmlUtils exposing (..)
 
 
 -- MODEL
@@ -48,16 +49,16 @@ update : Msg -> Model -> Globals.Model -> UpdateResult
 update msg model globals =
     case msg of
         RequestBalance ->
-            { model = model, globals = globals, cmd = requestBalance globals }
+            UpdateResult model globals (requestBalance globals)
 
         BalanceRequestFailed error ->
             if isTokenExpired error then
-                { model = { model | httpError = Just error }, globals = Globals.initialModel, cmd = Navigation.newUrl "#login" }
+                UpdateResult { model | httpError = Just error } Globals.initialModel (Navigation.newUrl "#login")
             else
-                { model = { model | httpError = Just error }, globals = globals, cmd = Navigation.newUrl "#login" }
+                UpdateResult { model | httpError = Just error } globals (Navigation.newUrl "#login")
 
         BalanceRequestSuccessfull result ->
-            { model = { model | balance = Just result.data }, globals = globals, cmd = Cmd.none }
+            UpdateResult { model | balance = Just result.data } globals Cmd.none
 
 
 urlChange : Globals.Model -> Cmd Msg
@@ -128,13 +129,7 @@ errorView : Model -> Html Msg
 errorView model =
     case model.httpError of
         Just error ->
-            div [ class "alert alert-danger", attribute "role" "alert" ]
-                [ span [ attribute "aria-hidden" "true", class "glyphicon glyphicon-exclamation-sign" ]
-                    []
-                , span [ class "sr-only" ]
-                    [ text "Error:" ]
-                , text (" " ++ (httpErrorToString error))
-                ]
+            Utils.HtmlUtils.errorView (httpErrorToString error)
 
         Nothing ->
             text ""
