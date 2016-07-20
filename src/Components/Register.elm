@@ -237,13 +237,7 @@ errorView : Model -> Html Msg
 errorView model =
     case model.httpError of
         Just error ->
-            div [ class "alert alert-danger", attribute "role" "alert" ]
-                [ span [ attribute "aria-hidden" "true", class "glyphicon glyphicon-exclamation-sign" ]
-                    []
-                , span [ class "sr-only" ]
-                    [ text "Error:" ]
-                , text (" " ++ (httpErrorToString error))
-                ]
+            Utils.HtmlUtils.errorView (httpErrorToString error)
 
         Nothing ->
             text ""

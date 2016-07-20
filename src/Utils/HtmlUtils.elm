@@ -22,6 +22,17 @@ showIfTrue b element =
         text ""
 
 
+errorView : String -> Html a
+errorView error =
+    div [ class "alert alert-danger", attribute "role" "alert" ]
+        [ span [ attribute "aria-hidden" "true", class "glyphicon glyphicon-exclamation-sign" ]
+            []
+        , span [ class "sr-only" ]
+            [ text "Error:" ]
+        , text (" " ++ error)
+        ]
+
+
 type alias InputFieldOptions a =
     { inputHandler : String -> a
     , focusHandler : Maybe a
