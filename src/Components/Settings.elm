@@ -128,25 +128,15 @@ update msg model global =
             }
 
         GetSettingSuccessful result ->
-            let
-                logging =
-                    result.data.transactionLogging
-
-                recovery =
-                    recoveryMethodFromString result.data.recoveryMethod
-
-                email =
-                    result.data.email
-            in
-                { model =
-                    { model
-                        | isTransactionLoggingEnabled = logging
-                        , recoveryMethod = recovery
-                        , email = email
-                    }
-                , globals = global
-                , cmd = Cmd.none
+            { model =
+                { model
+                    | isTransactionLoggingEnabled = result.data.transactionLogging
+                    , recoveryMethod = recoveryMethodFromString result.data.recoveryMethod
+                    , email = result.data.email
                 }
+            , globals = global
+            , cmd = Cmd.none
+            }
 
         PostSettingsFailed error ->
             { model = { model | httpError = Just error }
@@ -299,7 +289,7 @@ phraseView model =
         phaseSpans =
             List.map (\str -> span [ class "phrase" ] [ text str ]) model.phrase
     in
-        showIfTrue (List.isEmpty model.phrase) <|
+        showIfTrue (not <| List.isEmpty model.phrase) <|
             div
                 [ class "alert alert-success", attribute "role" "alert" ]
                 [ span [ attribute "aria-hidden" "true", class "glyphicon glyphicon-exclamation-sign" ]
