@@ -37,22 +37,27 @@ type Msg
     | BalanceRequestSuccessfull (Response Int)
 
 
-update : Msg -> Model -> Globals.Model -> ( Model, Cmd Msg )
-update msg model global =
+type alias UpdateResult =
+    { model : Model
+    , globals : Globals.Model
+    , cmd : Cmd Msg
+    }
+
+
+update : Msg -> Model -> Globals.Model -> UpdateResult
+update msg model globals =
     case msg of
         RequestBalance ->
-            model ! [ requestBalance global ]
+            { model = model, globals = globals, cmd = requestBalance globals }
 
         BalanceRequestFailed error ->
-            { model | httpError = Just error }
-                ! [ if isTokenExpired error then
-                        Navigation.newUrl "#login"
-                    else
-                        Cmd.none
-                  ]
+            if isTokenExpired error then
+                { model = { model | httpError = Just error }, globals = Globals.initialModel, cmd = Navigation.newUrl "#login" }
+            else
+                { model = { model | httpError = Just error }, globals = globals, cmd = Navigation.newUrl "#login" }
 
         BalanceRequestSuccessfull result ->
-            { model | balance = Just result.data } ! []
+            { model = { model | balance = Just result.data }, globals = globals, cmd = Navigation.newUrl "#login" }
 
 
 urlChange : Globals.Model -> Cmd Msg

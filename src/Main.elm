@@ -119,16 +119,10 @@ update msg model =
 
         Home hmsg ->
             let
-                newModelAndCommand =
+                updateResult =
                     Components.Home.update hmsg model.home model.globals
-
-                newModel =
-                    fst newModelAndCommand
-
-                newCommand =
-                    snd newModelAndCommand
             in
-                { model | home = newModel } ! [ Cmd.map Home newCommand ]
+                { model | home = updateResult.model, globals = updateResult.globals } ! [ Cmd.map Home updateResult.cmd ]
 
         Settings smdg ->
             let
