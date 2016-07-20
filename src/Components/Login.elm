@@ -12,6 +12,7 @@ import Task
 import Navigation
 import Globals
 import Utils.HttpUtils exposing (httpErrorToString)
+import Utils.HtmlUtils exposing (..)
 
 
 -- MODEL
@@ -159,30 +160,17 @@ formView model =
     div [ class "panel panel-primary login-form" ]
         [ div [ class "panel-heading" ] [ text "Login" ]
         , div [ class "panel-body" ]
-            [ div [ class <| "form-group" ]
-                [ label [ for "userName" ]
-                    [ text "Username" ]
-                , input
-                    [ class "form-control"
-                    , placeholder "Username"
-                    , type' "text"
-                    , onInput ChangeUsername
-                    ]
-                    []
-                ]
-            , div [ class <| "form-group" ]
-                [ label [ for "password" ]
-                    [ text "Password" ]
-                , input
-                    [ class "form-control"
-                    , placeholder "Password"
-                    , type' "password"
-                    , onInput ChangePassword
-                    , onEnter Login
-                    , value model.password
-                    ]
-                    []
-                ]
+            [ textFieldWithLabel ChangeUsername "Username" "Username"
+            , inputFieldWithLabel
+                { inputHandler = ChangePassword
+                , focusHandler = Nothing
+                , enterHandler = Just ( Login, NoOp )
+                , inputType = "password"
+                , labelText = "Password"
+                , placeholderText = "Password"
+                , hasError = False
+                , inputValue = Nothing
+                }
             , button
                 [ class "btn btn-primary"
                 , type' "submit"
@@ -197,15 +185,3 @@ formView model =
 isValid : Model -> Bool
 isValid model =
     (String.length model.username) > 0 && (String.length model.password > 6)
-
-
-onEnter : Msg -> Attribute Msg
-onEnter msg =
-    let
-        tagger code =
-            if code == 13 then
-                msg
-            else
-                NoOp
-    in
-        on "keydown" (JD.map tagger keyCode)

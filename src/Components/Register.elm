@@ -13,6 +13,7 @@ import Navigation
 import HttpBuilder exposing (..)
 import Globals
 import Utils.HttpUtils exposing (httpErrorToString)
+import Utils.HtmlUtils exposing (..)
 
 
 -- MODEL
@@ -281,31 +282,12 @@ formView model =
         div [ class "panel panel-primary register-form" ]
             [ div [ class "panel-heading" ] [ text "Register" ]
             , div [ class "panel-body" ]
-                [ div [ class <| "form-group" ]
-                    [ label [ for "userName" ]
-                        [ text "Username" ]
-                    , input
-                        [ class "form-control"
-                        , id "userName"
-                        , placeholder "Username"
-                        , type' "text"
-                        , onInput ChangeUsername
-                        ]
-                        []
-                    ]
-                , div [ class <| "form-group " ++ passwordValidationClassName model ]
-                    [ label [ for "password" ]
-                        [ text "Password" ]
-                    , input
-                        [ class "form-control"
-                        , id "password"
-                        , placeholder "Password"
-                        , type' "password"
-                        , onInput ChangePassword
-                        , onFocus FocusPassword
-                        ]
-                        []
-                    ]
+                [ textFieldWithLabel ChangeUsername "Username" "Username"
+                , passwordFieldWithLabel
+                    ChangePassword
+                    (Just FocusPassword)
+                    "Password"
+                    ((model.passwordWasFocussed) && not (passwordsAreOk model))
                 , label [] [ text "Password Strength" ]
                 , div [ class "progress" ]
                     [ div
@@ -315,31 +297,16 @@ formView model =
                         ]
                         []
                     ]
-                , div [ class <| "form-group " ++ passwordConfirmValidationClassName model ]
-                    [ label [ for "passwordConfirm" ]
-                        [ text "Confirm Password" ]
-                    , input
-                        [ class "form-control"
-                        , id "passwordConfirm"
-                        , placeholder "Confirm Password"
-                        , type' "password"
-                        , onInput ChangePassswordConfirm
-                        , onFocus FocusPasswordConfirm
-                        ]
-                        []
-                    ]
-                , div [ class <| "form-group " ++ emailValidationClassName model ]
-                    [ label [ for "email" ]
-                        [ text "E-Mail (optional)" ]
-                    , input
-                        [ class "form-control"
-                        , id "email"
-                        , placeholder "user@domain.tld"
-                        , type' "email"
-                        , onInput ChangeEmail
-                        ]
-                        []
-                    ]
+                , passwordFieldWithLabel
+                    ChangePassswordConfirm
+                    (Just FocusPasswordConfirm)
+                    "Confirm Password"
+                    ((model.passwordConfirmWasFocussed) && not (passwordsAreOk model))
+                , emailFieldWithLabel
+                    ChangeEmail
+                    "E-Mail (optional)"
+                    (not (emailValid model))
+                    Nothing
                 , button
                     [ class "btn btn-primary"
                     , type' "submit"
@@ -349,30 +316,6 @@ formView model =
                     [ text "Register" ]
                 ]
             ]
-
-
-passwordValidationClassName : Model -> String
-passwordValidationClassName model =
-    if passwordsAreOk model || passwordNotFocussed model then
-        ""
-    else
-        "has-error"
-
-
-passwordConfirmValidationClassName : Model -> String
-passwordConfirmValidationClassName model =
-    if passwordsAreOk model || passwordConfirmNotFocussed model then
-        ""
-    else
-        "has-error"
-
-
-emailValidationClassName : Model -> String
-emailValidationClassName model =
-    if emailValid model || emailEmpty model then
-        ""
-    else
-        "has-error"
 
 
 progressBarColorClassName : Model -> String
@@ -391,29 +334,14 @@ progressBarColorClassName model =
             "progress-bar-success"
 
 
-passwordsAreTheSame : Model -> Bool
-passwordsAreTheSame model =
-    model.password == model.passwordConfirm
-
-
 passwordsAreOk : Model -> Bool
 passwordsAreOk model =
-    passwordsAreTheSame model && model.passwordScore > 1
+    model.password == model.passwordConfirm && model.passwordScore > 1
 
 
 usernameOk : Model -> Bool
 usernameOk model =
     (String.length model.username) > 0
-
-
-passwordConfirmNotFocussed : Model -> Bool
-passwordConfirmNotFocussed model =
-    not model.passwordConfirmWasFocussed
-
-
-passwordNotFocussed : Model -> Bool
-passwordNotFocussed model =
-    not model.passwordWasFocussed
 
 
 emailValid : Model -> Bool

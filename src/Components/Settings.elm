@@ -300,13 +300,13 @@ transactionLoggingCheckbox model =
         , div []
             [ div [ class "btn-group", attribute "role" "group" ]
                 [ button
-                    [ class <| "btn btn-default " ++ (toActive <| model.isTransactionLoggingEnabled)
+                    [ class <| "btn btn-default " ++ (activeIfTrue <| model.isTransactionLoggingEnabled)
                     , type' "button"
                     , onClick ActivateTransactionLogging
                     ]
                     [ text "Record all transactions on server" ]
                 , button
-                    [ class <| "btn btn-default " ++ (toActive <| not model.isTransactionLoggingEnabled)
+                    [ class <| "btn btn-default " ++ (activeIfTrue <| not model.isTransactionLoggingEnabled)
                     , type' "button"
                     , onClick DeactivateTransactionLogging
                     ]
@@ -324,13 +324,13 @@ recoveryMethodDropdown model =
         , div []
             [ div [ class "btn-group", attribute "role" "group" ]
                 [ button
-                    [ class <| "btn btn-default " ++ (toActive <| model.recoveryMethod == EMail)
+                    [ class <| "btn btn-default " ++ (activeIfTrue <| model.recoveryMethod == EMail)
                     , type' "button"
                     , onClick SetRecoveryMethodEmail
                     ]
                     [ text "E-Mail" ]
                 , button
-                    [ class <| "btn btn-default " ++ (toActive <| model.recoveryMethod == Phrase)
+                    [ class <| "btn btn-default " ++ (activeIfTrue <| model.recoveryMethod == Phrase)
                     , type' "button"
                     , onClick SetRecoveryMethodPhrase
                     ]
@@ -342,18 +342,11 @@ recoveryMethodDropdown model =
 
 emailField : Model -> Html Msg
 emailField model =
-    div [ class <| "form-group" ]
-        [ label [ for "userName" ]
-            [ text "E-Mail" ]
-        , input
-            [ class "form-control"
-            , placeholder "user@domain.tld"
-            , type' "text"
-            , value model.email
-            , onInput UpdateEmail
-            ]
-            []
-        ]
+    emailFieldWithLabel
+        UpdateEmail
+        "E-Mail"
+        (not (emailValid model))
+        (Just model.email)
 
 
 modelValid : Model -> Bool
