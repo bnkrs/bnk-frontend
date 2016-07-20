@@ -57,7 +57,7 @@ update msg model globals =
                 { model = { model | httpError = Just error }, globals = globals, cmd = Navigation.newUrl "#login" }
 
         BalanceRequestSuccessfull result ->
-            { model = { model | balance = Just result.data }, globals = globals, cmd = Navigation.newUrl "#login" }
+            { model = { model | balance = Just result.data }, globals = globals, cmd = Cmd.none }
 
 
 urlChange : Globals.Model -> Cmd Msg
