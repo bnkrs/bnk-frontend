@@ -56,47 +56,32 @@ type alias UpdateResult =
 
 
 update : Msg -> Model -> Globals.Model -> UpdateResult
-update msg model global =
+update msg model globals =
     case msg of
         ChangeUsername name ->
-            { model = { model | username = name }
-            , globals = global
-            , cmd = Cmd.none
-            }
+            UpdateResult { model | username = name } globals Cmd.none
 
         ChangePassword password ->
-            { model = { model | password = password }
-            , globals = global
-            , cmd = Cmd.none
-            }
+            UpdateResult { model | password = password } globals Cmd.none
 
         Login ->
-            { model = model
-            , globals = global
-            , cmd = login model global
-            }
+            UpdateResult model globals (login model globals)
 
         LoginFailed error ->
-            { model = { model | httpError = Just error, password = "" }
-            , globals = global
-            , cmd = Cmd.none
-            }
+            UpdateResult { model | httpError = Just error, password = "" } globals Cmd.none
 
         LoginSuccessful token ->
             let
                 newGlobals =
-                    { global | apiToken = token.data, username = model.username }
+                    { globals | apiToken = token.data, username = model.username }
             in
-                { model = { model | password = "" }
-                , globals = newGlobals
-                , cmd = Cmd.batch [ saveToLocalstorage newGlobals, Navigation.newUrl "#home" ]
-                }
+                UpdateResult
+                    { model | password = "" }
+                    newGlobals
+                    (Cmd.batch [ saveToLocalstorage newGlobals, Navigation.newUrl "#home" ])
 
         NoOp ->
-            { model = model
-            , globals = global
-            , cmd = Cmd.none
-            }
+            UpdateResult model globals Cmd.none
 
 
 login : Model -> Globals.Model -> Cmd Msg
