@@ -109,7 +109,7 @@ type Msg
 
 type alias UpdateResult =
     { model : Model
-    , globalss : Globals.Model
+    , globals : Globals.Model
     , cmd : Cmd Msg
     }
 
