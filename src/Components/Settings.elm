@@ -10,6 +10,7 @@ import Maybe
 import Task
 import Navigation
 import Regex
+import Utils.HtmlUtils exposing (..)
 import Utils.HttpUtils exposing (httpErrorToString, isTokenExpired)
 import Globals
 
@@ -298,10 +299,9 @@ phraseView model =
         phaseSpans =
             List.map (\str -> span [ class "phrase" ] [ text str ]) model.phrase
     in
-        if List.length model.phrase == 0 then
-            text ""
-        else
-            div [ class "alert alert-success", attribute "role" "alert" ]
+        showIfTrue (List.isEmpty model.phrase) <|
+            div
+                [ class "alert alert-success", attribute "role" "alert" ]
                 [ span [ attribute "aria-hidden" "true", class "glyphicon glyphicon-exclamation-sign" ]
                     []
                 , text " Your recovery phrase:"
@@ -318,10 +318,7 @@ formView model =
             [ div [ class <| "form-group" ]
                 [ transactionLoggingCheckbox model
                 , recoveryMethodDropdown model
-                , if model.recoveryMethod == EMail then
-                    emailField model
-                  else
-                    text ""
+                , showIfTrue (model.recoveryMethod == EMail) (emailField model)
                 ]
             , button
                 [ class "btn btn-primary"
@@ -336,75 +333,49 @@ formView model =
 
 transactionLoggingCheckbox : Model -> Html Msg
 transactionLoggingCheckbox model =
-    let
-        activateLoggingButtonClass =
-            if model.isTransactionLoggingEnabled then
-                "active"
-            else
-                ""
-
-        deactivateLoggingButtonClass =
-            if not model.isTransactionLoggingEnabled then
-                "active"
-            else
-                ""
-    in
-        div [ class <| "form-group" ]
-            [ label [ for "userName" ] [ text "Transaction Logging" ]
-            , div []
-                [ div [ class "btn-group", attribute "role" "group" ]
-                    [ button
-                        [ class <| "btn btn-default " ++ activateLoggingButtonClass
-                        , type' "button"
-                        , onClick ActivateTransactionLogging
-                        ]
-                        [ text "Record all transactions on server" ]
-                    , button
-                        [ class <| "btn btn-default " ++ deactivateLoggingButtonClass
-                        , type' "button"
-                        , onClick DeactivateTransactionLogging
-                        ]
-                        [ text "Do not record transactions on server" ]
+    div [ class <| "form-group" ]
+        [ label [ for "userName" ] [ text "Transaction Logging" ]
+        , div []
+            [ div [ class "btn-group", attribute "role" "group" ]
+                [ button
+                    [ class <| "btn btn-default " ++ (toActive <| model.isTransactionLoggingEnabled)
+                    , type' "button"
+                    , onClick ActivateTransactionLogging
                     ]
+                    [ text "Record all transactions on server" ]
+                , button
+                    [ class <| "btn btn-default " ++ (toActive <| not model.isTransactionLoggingEnabled)
+                    , type' "button"
+                    , onClick DeactivateTransactionLogging
+                    ]
+                    [ text "Do not record transactions on server" ]
                 ]
             ]
+        ]
 
 
 recoveryMethodDropdown : Model -> Html Msg
 recoveryMethodDropdown model =
-    let
-        emailButtonClass =
-            if model.recoveryMethod == EMail then
-                "active"
-            else
-                ""
-
-        phraseButtonClass =
-            if model.recoveryMethod == Phrase then
-                "active"
-            else
-                ""
-    in
-        div [ class <| "form-group" ]
-            [ label [ for "userName" ]
-                [ text "Recovery Method" ]
-            , div []
-                [ div [ class "btn-group", attribute "role" "group" ]
-                    [ button
-                        [ class <| "btn btn-default " ++ emailButtonClass
-                        , type' "button"
-                        , onClick SetRecoveryMethodEmail
-                        ]
-                        [ text "E-Mail" ]
-                    , button
-                        [ class <| "btn btn-default " ++ phraseButtonClass
-                        , type' "button"
-                        , onClick SetRecoveryMethodPhrase
-                        ]
-                        [ text "Recovery Phrase" ]
+    div [ class <| "form-group" ]
+        [ label [ for "userName" ]
+            [ text "Recovery Method" ]
+        , div []
+            [ div [ class "btn-group", attribute "role" "group" ]
+                [ button
+                    [ class <| "btn btn-default " ++ (toActive <| model.recoveryMethod == EMail)
+                    , type' "button"
+                    , onClick SetRecoveryMethodEmail
                     ]
+                    [ text "E-Mail" ]
+                , button
+                    [ class <| "btn btn-default " ++ (toActive <| model.recoveryMethod == Phrase)
+                    , type' "button"
+                    , onClick SetRecoveryMethodPhrase
+                    ]
+                    [ text "Recovery Phrase" ]
                 ]
             ]
+        ]
 
 
 emailField : Model -> Html Msg
