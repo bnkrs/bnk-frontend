@@ -9,8 +9,10 @@ import HttpBuilder exposing (..)
 import Maybe
 import Task
 import Navigation
+import String
 import Utils.HtmlUtils exposing (..)
 import Utils.HttpUtils exposing (httpErrorToString, isTokenExpired)
+import Utils.PasswordChecker exposing (..)
 import Globals
 
 
@@ -25,7 +27,11 @@ type alias Model =
     , changePassword : Bool
     , oldPassword : String
     , newPassword : String
-    , confirmNewPasswprd : String
+    , confirmNewPassword : String
+    , oldPasswordWasFocussed : Bool
+    , newPasswordWasFocussed : Bool
+    , configmPasswordWasFocussed : Bool
+    , passwordScore : Int
     , httpError : Maybe (Error String)
     }
 
@@ -39,7 +45,11 @@ initialModel =
     , changePassword = False
     , oldPassword = ""
     , newPassword = ""
-    , confirmNewPasswprd = ""
+    , confirmNewPassword = ""
+    , oldPasswordWasFocussed = False
+    , newPasswordWasFocussed = False
+    , configmPasswordWasFocussed = False
+    , passwordScore = 0
     , httpError = Nothing
     }
 
@@ -116,6 +126,10 @@ type Msg
     | ChangeOldPassword String
     | ChangeNewPassword String
     | ChangePasswordConfirm String
+    | UpdatePasswordScore Int
+    | FocusOldPassword
+    | FocusNewPassword
+    | FocusConfirmPassword
 
 
 type alias UpdateResult =
@@ -176,16 +190,28 @@ update msg model globals =
             UpdateResult { model | email = mail } globals Cmd.none
 
         ShowChangePasswordForm checked ->
-            UpdateResult { model | changePassword = checked } globals Cmd.none
+            UpdateResult { model | changePassword = checked } globals (checkPassword "")
 
         ChangeOldPassword password ->
             UpdateResult { model | oldPassword = password } globals Cmd.none
 
         ChangeNewPassword password ->
-            UpdateResult { model | newPassword = password } globals Cmd.none
+            UpdateResult { model | newPassword = password } globals (checkPassword password)
 
         ChangePasswordConfirm password ->
-            UpdateResult { model | confirmNewPasswprd = password } globals Cmd.none
+            UpdateResult { model | confirmNewPassword = password } globals Cmd.none
+
+        UpdatePasswordScore score ->
+            UpdateResult { model | passwordScore = score } globals Cmd.none
+
+        FocusOldPassword ->
+            UpdateResult { model | oldPasswordWasFocussed = True } globals Cmd.none
+
+        FocusNewPassword ->
+            UpdateResult { model | newPasswordWasFocussed = True } globals Cmd.none
+
+        FocusConfirmPassword ->
+            UpdateResult { model | configmPasswordWasFocussed = True } globals Cmd.none
 
 
 getSettings : Globals.Model -> Cmd Msg
@@ -361,21 +387,46 @@ passwordChangeCheckbox model =
     div [ class "checkbox" ]
         [ label []
             [ input [ type' "checkbox", checked model.changePassword, onCheck ShowChangePasswordForm ] []
-            , text "Change my password"
+            , text "Change My Password"
             ]
         ]
 
 
 passwordChangeFields : Model -> Html Msg
 passwordChangeFields model =
-    showIfTrue model.changePassword <|
-        span []
-            [ passwordFieldWithLabel ChangeOldPassword Nothing "Old Password" False
-            , passwordFieldWithLabel ChangeNewPassword Nothing "New Password" False
-            , passwordFieldWithLabel ChangePasswordConfirm Nothing "Confirm New Password" False
-            ]
+    let
+        oldPasswordNotOk =
+            String.length model.oldPassword < 7 && model.oldPasswordWasFocussed
+
+        newPasswordNotOk =
+            model.passwordScore < 2 && model.newPasswordWasFocussed
+
+        confirmPasswordNotOk =
+            not (passwordsAreOk model) && model.configmPasswordWasFocussed
+    in
+        showIfTrue model.changePassword <|
+            span []
+                [ passwordFieldWithLabel ChangeOldPassword (Just FocusOldPassword) "Old Password" oldPasswordNotOk
+                , passwordFieldWithLabel ChangeNewPassword (Just FocusNewPassword) "New Password" newPasswordNotOk
+                , label [] [ text "Password Strength" ]
+                , passwordStrenghBar model.passwordScore
+                , passwordFieldWithLabel ChangePasswordConfirm (Just FocusConfirmPassword) "Confirm New Password" confirmPasswordNotOk
+                ]
 
 
 modelValid : Model -> Bool
 modelValid model =
+    if model.changePassword then
+        (recoveryMethodValid model) && (passwordsAreOk model)
+    else
+        recoveryMethodValid model
+
+
+recoveryMethodValid : Model -> Bool
+recoveryMethodValid model =
     model.recoveryMethod == Phrase || emailValid model.email
+
+
+passwordsAreOk : Model -> Bool
+passwordsAreOk model =
+    model.newPassword == model.confirmNewPassword && model.passwordScore > 1 && (String.length model.oldPassword) > 6

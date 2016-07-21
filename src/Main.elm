@@ -187,7 +187,10 @@ locationToPage location =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.map Register (Utils.PasswordChecker.passwordScore Components.Register.UpdatePasswordScore)
+    Sub.batch
+        [ Sub.map Register (Utils.PasswordChecker.passwordScore Components.Register.UpdatePasswordScore)
+        , Sub.map Settings (Utils.PasswordChecker.passwordScore Components.Settings.UpdatePasswordScore)
+        ]
 
 
 
