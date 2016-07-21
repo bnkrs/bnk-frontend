@@ -8,11 +8,6 @@ type alias Model =
     }
 
 
-initialModel : Model
-initialModel =
-    { apiToken = "", username = "", endpoint = "" }
-
-
 logout : Model -> Model
 logout model =
     { model | apiToken = "", username = "" }

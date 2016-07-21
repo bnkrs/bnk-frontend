@@ -13,6 +13,7 @@ import Components.Register
 import Components.Login
 import Components.Home
 import Components.Settings
+import Utils.PasswordChecker
 
 
 -- APP
@@ -138,7 +139,7 @@ update msg model =
                 newModel ! [ Cmd.map Settings updateResult.cmd ]
 
         Logout ->
-            { model | globals = Globals.initialModel }
+            { model | globals = Globals.logout model.globals }
                 ! [ Components.Login.saveToLocalstorage <| Globals.logout model.globals ]
 
 
@@ -149,7 +150,7 @@ urlUpdate page model =
             model.settings
 
         newSettings =
-            { settings | phrase = [] }
+            { settings | phrase = [], httpError = Nothing }
     in
         ( { model | currentPage = page, settings = newSettings }
         , commandForPage model page
@@ -186,7 +187,7 @@ locationToPage location =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.map Register (Components.Register.passwordScore Components.Register.UpdatePasswordScore)
+    Sub.map Register (Utils.PasswordChecker.passwordScore Components.Register.UpdatePasswordScore)
 
 
 

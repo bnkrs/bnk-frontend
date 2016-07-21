@@ -9,7 +9,6 @@ import HttpBuilder exposing (..)
 import Maybe
 import Task
 import Navigation
-import Regex
 import Utils.HtmlUtils exposing (..)
 import Utils.HttpUtils exposing (httpErrorToString, isTokenExpired)
 import Globals
@@ -23,8 +22,36 @@ type alias Model =
     , recoveryMethod : RecoveryMethod
     , email : String
     , phrase : List String
+    , changePassword : Bool
+    , oldPassword : String
+    , newPassword : String
+    , confirmNewPasswprd : String
     , httpError : Maybe (Error String)
     }
+
+
+initialModel : Model
+initialModel =
+    { isTransactionLoggingEnabled = False
+    , recoveryMethod = UnknownRecoveryMethod
+    , email = ""
+    , phrase = []
+    , changePassword = False
+    , oldPassword = ""
+    , newPassword = ""
+    , confirmNewPasswprd = ""
+    , httpError = Nothing
+    }
+
+
+modelToJson : Model -> Globals.Model -> JE.Value
+modelToJson model globalss =
+    JE.object
+        [ ( "token", JE.string globalss.apiToken )
+        , ( "transactionLogging", JE.bool model.isTransactionLoggingEnabled )
+        , ( "recoveryMethod", JE.string (recoveryMethodToString model.recoveryMethod) )
+        , ( "email", JE.string model.email )
+        ]
 
 
 type RecoveryMethod
@@ -61,26 +88,6 @@ type alias GetSettingsResponse =
     }
 
 
-initialModel : Model
-initialModel =
-    { isTransactionLoggingEnabled = False
-    , recoveryMethod = UnknownRecoveryMethod
-    , email = ""
-    , phrase = []
-    , httpError = Nothing
-    }
-
-
-modelToJson : Model -> Globals.Model -> JE.Value
-modelToJson model globalss =
-    JE.object
-        [ ( "token", JE.string globalss.apiToken )
-        , ( "transactionLogging", JE.bool model.isTransactionLoggingEnabled )
-        , ( "recoveryMethod", JE.string (recoveryMethodToString model.recoveryMethod) )
-        , ( "email", JE.string model.email )
-        ]
-
-
 
 -- UPDATE
 
@@ -105,6 +112,10 @@ type Msg
     | SetRecoveryMethodEmail
     | SetRecoveryMethodPhrase
     | UpdateEmail String
+    | ShowChangePasswordForm Bool
+    | ChangeOldPassword String
+    | ChangeNewPassword String
+    | ChangePasswordConfirm String
 
 
 type alias UpdateResult =
@@ -163,6 +174,18 @@ update msg model globals =
 
         UpdateEmail mail ->
             UpdateResult { model | email = mail } globals Cmd.none
+
+        ShowChangePasswordForm checked ->
+            UpdateResult { model | changePassword = checked } globals Cmd.none
+
+        ChangeOldPassword password ->
+            UpdateResult { model | oldPassword = password } globals Cmd.none
+
+        ChangeNewPassword password ->
+            UpdateResult { model | newPassword = password } globals Cmd.none
+
+        ChangePasswordConfirm password ->
+            UpdateResult { model | confirmNewPasswprd = password } globals Cmd.none
 
 
 getSettings : Globals.Model -> Cmd Msg
@@ -268,15 +291,11 @@ formView model =
             [ div [ class <| "form-group" ]
                 [ transactionLoggingCheckbox model
                 , recoveryMethodButtons model
-                , showIfTrue (model.recoveryMethod == EMail) (emailField model)
+                , showIfTrue (model.recoveryMethod == EMail) (emailField model.email)
+                , passwordChangeCheckbox model
+                , passwordChangeFields model
                 ]
-            , button
-                [ class "btn btn-primary"
-                , type' "submit"
-                , onClick Save
-                , disabled <| not <| modelValid model
-                ]
-                [ text "Save" ]
+            , primaryButton Save (modelValid model) "Save"
             ]
         ]
 
@@ -328,24 +347,35 @@ recoveryMethodButtons model =
         ]
 
 
-emailField : Model -> Html Msg
-emailField model =
+emailField : String -> Html Msg
+emailField email =
     emailFieldWithLabel
         UpdateEmail
         "E-Mail"
-        (not (emailValid model))
-        (Just model.email)
+        (not (emailValid email))
+        (Just email)
+
+
+passwordChangeCheckbox : Model -> Html Msg
+passwordChangeCheckbox model =
+    div [ class "checkbox" ]
+        [ label []
+            [ input [ type' "checkbox", checked model.changePassword, onCheck ShowChangePasswordForm ] []
+            , text "Change my password"
+            ]
+        ]
+
+
+passwordChangeFields : Model -> Html Msg
+passwordChangeFields model =
+    showIfTrue model.changePassword <|
+        span []
+            [ passwordFieldWithLabel ChangeOldPassword Nothing "Old Password" False
+            , passwordFieldWithLabel ChangeNewPassword Nothing "New Password" False
+            , passwordFieldWithLabel ChangePasswordConfirm Nothing "Confirm New Password" False
+            ]
 
 
 modelValid : Model -> Bool
 modelValid model =
-    model.recoveryMethod == Phrase || emailValid model
-
-
-emailValid : Model -> Bool
-emailValid model =
-    let
-        emailRegex =
-            Regex.caseInsensitive (Regex.regex "^\\S+@\\S+\\.\\S+$")
-    in
-        (Regex.contains emailRegex model.email)
+    model.recoveryMethod == Phrase || emailValid model.email

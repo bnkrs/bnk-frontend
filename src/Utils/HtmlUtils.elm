@@ -4,6 +4,8 @@ import Html exposing (..)
 import Html.Events exposing (onInput, onFocus, onClick, on, keyCode)
 import Html.Attributes exposing (..)
 import Json.Decode as JD
+import Regex
+import String
 
 
 activeIfTrue : Bool -> String
@@ -33,6 +35,15 @@ errorView error =
         ]
 
 
+emailValid : String -> Bool
+emailValid mail =
+    let
+        emailRegex =
+            Regex.caseInsensitive (Regex.regex "^\\S+@\\S+\\.\\S+$")
+    in
+        (Regex.contains emailRegex mail) || String.length mail == 0
+
+
 type alias InputFieldOptions a =
     { inputHandler : String -> a
     , focusHandler : Maybe a
@@ -43,6 +54,17 @@ type alias InputFieldOptions a =
     , hasError : Bool
     , inputValue : Maybe String
     }
+
+
+primaryButton : a -> Bool -> String -> Html a
+primaryButton clickHandler isEnabled label =
+    button
+        [ class "btn btn-primary"
+        , type' "submit"
+        , onClick clickHandler
+        , disabled <| not isEnabled
+        ]
+        [ text label ]
 
 
 textFieldWithLabel : (String -> a) -> String -> String -> Html a

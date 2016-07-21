@@ -1,7 +1,6 @@
 port module Components.Login exposing (..)
 
 import Html exposing (..)
-import Html.Events exposing (onInput, onFocus, onClick, on, keyCode)
 import Html.Attributes exposing (..)
 import String
 import Json.Decode as JD exposing ((:=))
@@ -77,7 +76,7 @@ update msg model globals =
                     { globals | apiToken = token.data, username = model.username }
             in
                 UpdateResult
-                    { model | password = "" }
+                    { model | password = "", httpError = Nothing }
                     newGlobals
                     (Cmd.batch [ saveToLocalstorage newGlobals, Navigation.newUrl "#home" ])
 
@@ -163,15 +162,9 @@ formView model =
                 , labelText = "Password"
                 , placeholderText = "Password"
                 , hasError = False
-                , inputValue = Nothing
+                , inputValue = Just model.password
                 }
-            , button
-                [ class "btn btn-primary"
-                , type' "submit"
-                , disabled <| not (isValid model)
-                , onClick Login
-                ]
-                [ text "Login" ]
+            , primaryButton Login (isValid model) "Login"
             ]
         ]
 

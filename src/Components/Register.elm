@@ -2,9 +2,7 @@ port module Components.Register exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onInput, onFocus, onClick)
 import String
-import Regex
 import Json.Decode as JD exposing ((:=))
 import Json.Encode as JE
 import Task
@@ -14,6 +12,7 @@ import HttpBuilder exposing (..)
 import Globals
 import Utils.HttpUtils exposing (httpErrorToString)
 import Utils.HtmlUtils exposing (..)
+import Utils.PasswordChecker exposing (..)
 
 
 -- MODEL
@@ -48,16 +47,6 @@ initialModel =
     , wasRegistrationSuccessfull = False
     , httpError = Maybe.Nothing
     }
-
-
-
--- PORTS
-
-
-port checkPassword : String -> Cmd msg
-
-
-port passwordScore : (Int -> msg) -> Sub msg
 
 
 
@@ -105,7 +94,7 @@ update msg model globals =
         Register ->
             let
                 command =
-                    if not <| emailEmpty model then
+                    if not <| String.isEmpty model.email then
                         registerUserWithEmail model globals
                     else
                         registerUserWithPhrase model globals
@@ -212,7 +201,7 @@ modelToJson model =
             ]
 
         recovery =
-            if not <| emailEmpty model then
+            if not <| String.isEmpty model.email then
                 [ ( "recoveryMethod", JE.string "email" ), ( "email", JE.string model.email ) ]
             else
                 [ ( "recoveryMethod", JE.string "phrase" ) ]
@@ -247,10 +236,10 @@ phraseView : Model -> Html Msg
 phraseView model =
     let
         hasPhrase =
-            List.length model.phrase > 0
+            not (List.isEmpty model.phrase)
 
-        phraseStr =
-            List.foldl (\word phrase -> phrase ++ " " ++ word) " " model.phrase
+        phaseText =
+            List.foldl (\word phrase -> word ++ " " ++ phrase) "" model.phrase
 
         expplaination =
             """You have registered without an email address.
@@ -262,7 +251,7 @@ phraseView model =
             div [ class "alert alert-success lead", attribute "role" "alert" ]
                 [ text expplaination
                 , br [] []
-                , b [] [ text phraseStr ]
+                , text phaseText
                 ]
         else
             text ""
@@ -299,15 +288,9 @@ formView model =
                 , emailFieldWithLabel
                     ChangeEmail
                     "E-Mail (optional)"
-                    (not (emailValid model))
+                    (not (emailValid model.email))
                     Nothing
-                , button
-                    [ class "btn btn-primary"
-                    , type' "submit"
-                    , disabled <| not (isValid model)
-                    , onClick Register
-                    ]
-                    [ text "Register" ]
+                , primaryButton Register (isValid model) "Register"
                 ]
             ]
 
@@ -338,23 +321,9 @@ usernameOk model =
     (String.length model.username) > 0
 
 
-emailValid : Model -> Bool
-emailValid model =
-    let
-        emailRegex =
-            Regex.caseInsensitive (Regex.regex "^\\S+@\\S+\\.\\S+$")
-    in
-        (Regex.contains emailRegex model.email) || String.length model.email == 0
-
-
-emailEmpty : Model -> Bool
-emailEmpty model =
-    (String.length model.email) == 0
-
-
 isValid : Model -> Bool
 isValid model =
-    (passwordsAreOk model) && (usernameOk model) && (emailValid model)
+    (passwordsAreOk model) && (usernameOk model) && (emailValid model.email)
 
 
 calculateWith : Model -> Int
