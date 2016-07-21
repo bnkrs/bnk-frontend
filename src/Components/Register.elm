@@ -293,11 +293,6 @@ passwordsAreOk model =
     model.password == model.passwordConfirm && model.passwordScore > 1
 
 
-usernameOk : Model -> Bool
-usernameOk model =
-    (String.length model.username) > 0
-
-
 isValid : Model -> Bool
 isValid model =
-    (passwordsAreOk model) && (usernameOk model) && (emailValid model.email)
+    (passwordsAreOk model) && (not <| String.isEmpty model.username) && (emailValid model.email)
