@@ -32,6 +32,7 @@ type alias Model =
     , newPasswordWasFocussed : Bool
     , configmPasswordWasFocussed : Bool
     , passwordScore : Int
+    , passwordWasUpdated : Bool
     , httpError : Maybe (Error String)
     }
 
@@ -50,17 +51,27 @@ initialModel =
     , newPasswordWasFocussed = False
     , configmPasswordWasFocussed = False
     , passwordScore = 0
+    , passwordWasUpdated = False
     , httpError = Nothing
     }
 
 
-modelToJson : Model -> Globals.Model -> JE.Value
-modelToJson model globalss =
+settingsToJson : Model -> Globals.Model -> JE.Value
+settingsToJson model globals =
     JE.object
-        [ ( "token", JE.string globalss.apiToken )
+        [ ( "token", JE.string globals.apiToken )
         , ( "transactionLogging", JE.bool model.isTransactionLoggingEnabled )
         , ( "recoveryMethod", JE.string (recoveryMethodToString model.recoveryMethod) )
         , ( "email", JE.string model.email )
+        ]
+
+
+passwordsToJson : Model -> Globals.Model -> JE.Value
+passwordsToJson model globals =
+    JE.object
+        [ ( "token", JE.string globals.apiToken )
+        , ( "new_password", JE.string model.newPassword )
+        , ( "old_password", JE.string model.oldPassword )
         ]
 
 
@@ -113,8 +124,9 @@ urlChange model =
 type Msg
     = GetSettingsFailed (Error String)
     | GetSettingSuccessful (Response GetSettingsResponse)
-    | PostSettingsFailed (Error String)
+    | PostFailed (Error String)
     | PostSettingsSuccessful (Response (List String))
+    | PostNewPasswordSuccessful (Response Bool)
     | Save
     | ToggleTransacionLogging Bool
     | ActivateTransactionLogging
@@ -162,14 +174,17 @@ update msg model globals =
                 globals
                 Cmd.none
 
-        PostSettingsFailed error ->
+        PostFailed error ->
             UpdateResult { model | httpError = Just error } globals Cmd.none
 
         PostSettingsSuccessful result ->
             UpdateResult { model | phrase = result.data } globals Cmd.none
 
+        PostNewPasswordSuccessful _ ->
+            UpdateResult { model | passwordWasUpdated = True } globals Cmd.none
+
         Save ->
-            UpdateResult model globals (postSettings model globals)
+            UpdateResult model globals <| Cmd.batch [ (postSettings model globals), (postNewPassword model globals) ]
 
         ToggleTransacionLogging enabled ->
             UpdateResult { model | isTransactionLoggingEnabled = enabled } globals Cmd.none
@@ -243,11 +258,37 @@ doGetSettings globals =
 
 
 postSettings : Model -> Globals.Model -> Cmd Msg
-postSettings model globalss =
+postSettings model globals =
     Task.perform
-        PostSettingsFailed
+        PostFailed
         PostSettingsSuccessful
-        (doPostSettings model globalss)
+        (doPostSettings model globals)
+
+
+postNewPassword : Model -> Globals.Model -> Cmd Msg
+postNewPassword model globals =
+    Task.perform
+        PostFailed
+        PostNewPasswordSuccessful
+        (doPostPasswordChange model globals)
+
+
+doPostPasswordChange : Model -> Globals.Model -> Task.Task (Error String) (Response Bool)
+doPostPasswordChange model globals =
+    let
+        successReader =
+            jsonReader ("success" := JD.bool)
+
+        failReader =
+            jsonReader (JD.at [ "error" ] ("message" := JD.string))
+
+        body =
+            passwordsToJson model globals
+    in
+        HttpBuilder.post (globals.endpoint ++ "/user/change_password")
+            |> withJsonBody body
+            |> withHeader "Content-Type" "application/json"
+            |> send successReader failReader
 
 
 doPostSettings : Model -> Globals.Model -> Task.Task (Error String) (Response (List String))
@@ -260,7 +301,7 @@ doPostSettings model globals =
             jsonReader (JD.at [ "error" ] ("message" := JD.string))
 
         body =
-            modelToJson model globals
+            settingsToJson model globals
     in
         HttpBuilder.post (globals.endpoint ++ "/user/settings")
             |> withJsonBody body
@@ -406,11 +447,23 @@ passwordChangeFields model =
     in
         showIfTrue model.changePassword <|
             span []
-                [ passwordFieldWithLabel ChangeOldPassword (Just FocusOldPassword) "Old Password" oldPasswordNotOk
-                , passwordFieldWithLabel ChangeNewPassword (Just FocusNewPassword) "New Password" newPasswordNotOk
+                [ passwordFieldWithLabel
+                    ChangeOldPassword
+                    (Just FocusOldPassword)
+                    "Old Password"
+                    oldPasswordNotOk
+                , passwordFieldWithLabel
+                    ChangeNewPassword
+                    (Just FocusNewPassword)
+                    "New Password"
+                    newPasswordNotOk
                 , label [] [ text "Password Strength" ]
                 , passwordStrenghBar model.passwordScore
-                , passwordFieldWithLabel ChangePasswordConfirm (Just FocusConfirmPassword) "Confirm New Password" confirmPasswordNotOk
+                , passwordFieldWithLabel
+                    ChangePasswordConfirm
+                    (Just FocusConfirmPassword)
+                    "Confirm New Password"
+                    confirmPasswordNotOk
                 ]
 
 
@@ -429,4 +482,8 @@ recoveryMethodValid model =
 
 passwordsAreOk : Model -> Bool
 passwordsAreOk model =
-    model.newPassword == model.confirmNewPassword && model.passwordScore > 1 && (String.length model.oldPassword) > 6
+    (model.newPassword == model.confirmNewPassword)
+        && model.passwordScore
+        > 1
+        && (String.length model.oldPassword)
+        > 6
