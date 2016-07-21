@@ -67,6 +67,33 @@ primaryButton clickHandler isEnabled label =
         [ text label ]
 
 
+passwordStrenghBar : Int -> Html a
+passwordStrenghBar strength =
+    let
+        progressBarColorClassName =
+            case strength of
+                0 ->
+                    "progress-bar-danger"
+
+                1 ->
+                    "progress-bar-danger"
+
+                2 ->
+                    "progress-bar-warning"
+
+                _ ->
+                    "progress-bar-success"
+    in
+        div [ class "progress" ]
+            [ div
+                [ class <| "progress-bar " ++ progressBarColorClassName
+                , attribute "role" "progressbar"
+                , style [ ( "width", (toString (25 * strength)) ++ "%" ) ]
+                ]
+                []
+            ]
+
+
 textFieldWithLabel : (String -> a) -> String -> String -> Html a
 textFieldWithLabel inputHandler labelText placeholderText =
     inputFieldWithLabel <| InputFieldOptions inputHandler Nothing Nothing "text" labelText placeholderText False Nothing

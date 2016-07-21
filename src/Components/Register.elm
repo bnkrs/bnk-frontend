@@ -272,14 +272,7 @@ formView model =
                     "Password"
                     ((model.passwordWasFocussed) && not (passwordsAreOk model))
                 , label [] [ text "Password Strength" ]
-                , div [ class "progress" ]
-                    [ div
-                        [ class <| "progress-bar " ++ progressBarColorClassName model
-                        , attribute "role" "progressbar"
-                        , style [ ( "width", (toString (calculateWith model)) ++ "%" ) ]
-                        ]
-                        []
-                    ]
+                , passwordStrenghBar model.passwordScore
                 , passwordFieldWithLabel
                     ChangePassswordConfirm
                     (Just FocusPasswordConfirm)
@@ -295,22 +288,6 @@ formView model =
             ]
 
 
-progressBarColorClassName : Model -> String
-progressBarColorClassName model =
-    case model.passwordScore of
-        0 ->
-            "progress-bar-danger"
-
-        1 ->
-            "progress-bar-danger"
-
-        2 ->
-            "progress-bar-warning"
-
-        _ ->
-            "progress-bar-success"
-
-
 passwordsAreOk : Model -> Bool
 passwordsAreOk model =
     model.password == model.passwordConfirm && model.passwordScore > 1
@@ -324,8 +301,3 @@ usernameOk model =
 isValid : Model -> Bool
 isValid model =
     (passwordsAreOk model) && (usernameOk model) && (emailValid model.email)
-
-
-calculateWith : Model -> Int
-calculateWith model =
-    25 * model.passwordScore
