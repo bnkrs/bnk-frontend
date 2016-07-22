@@ -119,7 +119,7 @@ formatBalance : Maybe Int -> String
 formatBalance balance =
     case balance of
         Just value ->
-            (toString <| (toFloat value) / 10) ++ " " ++ "€"
+            (toString <| (toFloat value) / 100) ++ " " ++ "€"
 
         Nothing ->
             "No data yet"
