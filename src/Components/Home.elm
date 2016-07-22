@@ -18,6 +18,15 @@ import Utils.HtmlUtils exposing (..)
 type alias Model =
     { balance : Maybe Int
     , httpError : Maybe (Error String)
+    , transactions : List Transaction
+    }
+
+
+type alias Transaction =
+    { sender : String
+    , receiver : String
+    , value : Int
+    , timestamp : Int
     }
 
 
@@ -25,6 +34,7 @@ initialModel : Model
 initialModel =
     { balance = Nothing
     , httpError = Nothing
+    , transactions = []
     }
 
 
@@ -34,8 +44,9 @@ initialModel =
 
 type Msg
     = RequestBalance
-    | BalanceRequestFailed (Error String)
+    | RequestFailed (Error String)
     | BalanceRequestSuccessfull (Response Int)
+    | TransactionsRequestSuccessfull (Response (List Transaction))
 
 
 type alias UpdateResult =
@@ -51,7 +62,7 @@ update msg model globals =
         RequestBalance ->
             UpdateResult model globals (requestBalance globals)
 
-        BalanceRequestFailed error ->
+        RequestFailed error ->
             if isTokenExpired error then
                 UpdateResult { model | httpError = Just error } (Globals.logout globals) (Navigation.newUrl "#login")
             else
@@ -60,19 +71,59 @@ update msg model globals =
         BalanceRequestSuccessfull result ->
             UpdateResult { model | balance = Just result.data } globals Cmd.none
 
+        TransactionsRequestSuccessfull result ->
+            UpdateResult model globals Cmd.none
+
 
 urlChange : Globals.Model -> Cmd Msg
-urlChange model =
-    if model.apiToken == "" then
+urlChange globals =
+    if globals.apiToken == "" then
         Navigation.newUrl "#login"
     else
-        requestBalance model
+        Cmd.batch [ (requestBalance globals), (requestTransaction globals) ]
+
+
+requestTransaction : Globals.Model -> Cmd Msg
+requestTransaction global =
+    Task.perform
+        RequestFailed
+        TransactionsRequestSuccessfull
+        (doTransactionRequest global)
+
+
+doTransactionRequest : Globals.Model -> Task.Task (Error String) (Response (List Transaction))
+doTransactionRequest { endpoint, apiToken } =
+    let
+        baseUrl =
+            endpoint ++ "/user/transactions"
+
+        tranasctionUrl =
+            HttpBuilder.url baseUrl [ ( "token", apiToken ) ]
+
+        successReader =
+            jsonReader <|
+                JD.at [ "transactions" ] <|
+                    (JD.list <|
+                        JD.object4
+                            Transaction
+                            ("sender" := JD.string)
+                            ("receiver" := JD.string)
+                            ("value" := JD.int)
+                            ("timestamp" := JD.int)
+                    )
+
+        failReader =
+            jsonReader (JD.at [ "error" ] ("message" := JD.string))
+    in
+        HttpBuilder.get tranasctionUrl
+            |> withHeader "Content-Type" "application/json"
+            |> send successReader failReader
 
 
 requestBalance : Globals.Model -> Cmd Msg
 requestBalance global =
     Task.perform
-        BalanceRequestFailed
+        RequestFailed
         BalanceRequestSuccessfull
         (doBalanceRequest global)
 
