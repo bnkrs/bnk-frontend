@@ -22,6 +22,7 @@ type alias Model =
     { receiver : String
     , value : Int
     , httpError : Maybe (Error String)
+    , success : Bool
     }
 
 
@@ -30,6 +31,7 @@ initialModel =
     { receiver = ""
     , value = 0
     , httpError = Nothing
+    , success = False
     }
 
 
@@ -50,7 +52,7 @@ type Msg
     = UpdateReceiver String
     | UpdateValue String
     | TransactionReqeustFailed (Error String)
-    | TransactionReqeustSuccessFull (Response Int)
+    | TransactionReqeustSuccessFull (Response Bool)
     | Send
 
 
@@ -78,10 +80,10 @@ update msg model globals =
             if isTokenExpired error then
                 UpdateResult { model | httpError = Just error } (Globals.logout globals) (Navigation.newUrl "#login")
             else
-                UpdateResult { model | httpError = Just error } globals (Navigation.newUrl "#login")
+                UpdateResult { model | httpError = Just error } globals Cmd.none
 
         TransactionReqeustSuccessFull result ->
-            UpdateResult model globals Cmd.none
+            UpdateResult { model | success = True } globals Cmd.none
 
         Send ->
             UpdateResult model globals (requestBalance model globals)
@@ -95,11 +97,11 @@ requestBalance model globals =
         (doBalanceRequest model globals)
 
 
-doBalanceRequest : Model -> Globals.Model -> Task.Task (Error String) (Response Int)
+doBalanceRequest : Model -> Globals.Model -> Task.Task (Error String) (Response Bool)
 doBalanceRequest model { endpoint, apiToken } =
     let
         successReader =
-            jsonReader ("balance" := JD.int)
+            jsonReader ("success" := JD.bool)
 
         failReader =
             jsonReader (JD.at [ "error" ] ("message" := JD.string))
@@ -123,6 +125,7 @@ view model =
         [ div [ class "col-xs-1" ] []
         , div [ class "col-xs-8" ]
             [ errorView model
+            , successView model.success
             , formView model
             ]
         , div [ class "col-xs-1" ] []
@@ -155,16 +158,6 @@ isValid model =
     model.value > 0 && not (String.isEmpty model.receiver)
 
 
-formatBalance : Maybe Int -> String
-formatBalance balance =
-    case balance of
-        Just value ->
-            (toString <| (toFloat value) / 10) ++ " " ++ "€"
-
-        Nothing ->
-            "No data yet"
-
-
 errorView : Model -> Html Msg
 errorView model =
     case model.httpError of
@@ -173,3 +166,14 @@ errorView model =
 
         Nothing ->
             text ""
+
+
+successView : Bool -> Html Msg
+successView successfull =
+    showIfTrue successfull <|
+        div
+            [ class "alert alert-success", attribute "role" "alert" ]
+            [ span [ attribute "aria-hidden" "true", class "glyphicon glyphicon-exclamation-sign" ]
+                []
+            , text " Your money was successfully transfered."
+            ]
