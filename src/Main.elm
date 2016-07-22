@@ -13,7 +13,9 @@ import Components.Register
 import Components.Login
 import Components.Home
 import Components.Settings
+import Components.Transactions
 import Utils.PasswordChecker
+import Utils.HtmlUtils as HtmlUtils
 
 
 -- APP
@@ -40,6 +42,7 @@ type Page
     | RegisterPage
     | LoginPage
     | SettingsPage
+    | TransactionsPage
 
 
 type alias Model =
@@ -47,6 +50,7 @@ type alias Model =
     , login : Components.Login.Model
     , home : Components.Home.Model
     , settings : Components.Settings.Model
+    , transactions : Components.Transactions.Model
     , globals : Globals.Model
     , currentPage : Page
     }
@@ -60,6 +64,7 @@ init globals page =
             , login = Components.Login.initialModel
             , home = Components.Home.initialModel
             , settings = Components.Settings.initialModel
+            , transactions = Components.Transactions.initialModel
             , globals = globals
             , currentPage = page
             }
@@ -92,6 +97,7 @@ type Msg
     | Login Components.Login.Msg
     | Home Components.Home.Msg
     | Settings Components.Settings.Msg
+    | Transactions Components.Transactions.Msg
     | Logout
 
 
@@ -138,6 +144,14 @@ update msg model =
             in
                 newModel ! [ Cmd.map Settings updateResult.cmd ]
 
+        Transactions tmsg ->
+            let
+                updateResult =
+                    Components.Transactions.update tmsg model.transactions model.globals
+            in
+                { model | transactions = updateResult.model, globals = updateResult.globals }
+                    ! [ Cmd.map Transactions updateResult.cmd ]
+
         Logout ->
             { model | globals = Globals.logout model.globals }
                 ! [ Components.Login.saveToLocalstorage <| Globals.logout model.globals ]
@@ -179,6 +193,7 @@ matchers =
         , UrlParser.format RegisterPage (UrlParser.s "register")
         , UrlParser.format LoginPage (UrlParser.s "login")
         , UrlParser.format SettingsPage (UrlParser.s "settings")
+        , UrlParser.format TransactionsPage (UrlParser.s "transactions")
         ]
 
 
@@ -232,6 +247,11 @@ view model =
                         model.settings
                             |> Components.Settings.view
                             |> Html.map Settings
+
+                    TransactionsPage ->
+                        model.transactions
+                            |> Components.Transactions.view
+                            |> Html.map Transactions
                 , hr [] []
                 , text (toString model)
                 ]
@@ -240,32 +260,35 @@ view model =
 
 
 navBar : Model -> Html Msg
-navBar model =
+navBar { globals, currentPage } =
     let
-        usernameText =
-            if String.length model.globals.username > 0 then
-                "Hello, " ++ model.globals.username
-            else
-                ""
+        homeElement =
+            li
+                [ class <| HtmlUtils.activeIfTrue <| currentPage == HomePage
+                ]
+                [ a [ href "#" ]
+                    [ text "Home" ]
+                ]
 
-        logoutElement =
-            if String.length model.globals.apiToken > 0 then
-                li [] [ a [ href "", onClick Logout ] [ text "Logout" ] ]
-            else
-                text ""
+        transactionsElement =
+            HtmlUtils.showIfTrue (not <| String.isEmpty globals.username) <|
+                li
+                    [ class <| HtmlUtils.activeIfTrue <| currentPage == TransactionsPage
+                    ]
+                    [ a [ href "#transactions" ] [ text "Transactions" ] ]
 
         settingsElement =
-            if String.length model.globals.apiToken > 0 then
+            HtmlUtils.showIfTrue (not <| String.isEmpty globals.username) <|
                 li
-                    [ class <|
-                        if model.currentPage == SettingsPage then
-                            "active"
-                        else
-                            ""
+                    [ class <| HtmlUtils.activeIfTrue <| currentPage == SettingsPage
                     ]
                     [ a [ href "#settings" ] [ text "Settings" ] ]
-            else
-                text ""
+
+        logoutElement =
+            HtmlUtils.showIfTrue (not <| String.isEmpty globals.apiToken) <|
+                li
+                    []
+                    [ a [ href "", onClick Logout ] [ text "Logout" ] ]
     in
         nav [ class "navbar navbar-default navbar-fixed-top" ]
             [ div [ class "container" ]
@@ -275,16 +298,8 @@ navBar model =
                         [ text "bnk" ]
                     ]
                 , ul [ class "nav navbar-nav" ]
-                    [ li
-                        [ class <|
-                            if model.currentPage == HomePage then
-                                "active"
-                            else
-                                ""
-                        ]
-                        [ a [ href "#" ]
-                            [ text "Home" ]
-                        ]
+                    [ homeElement
+                    , transactionsElement
                     , settingsElement
                     ]
                 , ul [ class "nav navbar-nav navbar-right " ]

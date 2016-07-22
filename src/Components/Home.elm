@@ -55,7 +55,7 @@ update msg model globals =
             if isTokenExpired error then
                 UpdateResult { model | httpError = Just error } (Globals.logout globals) (Navigation.newUrl "#login")
             else
-                UpdateResult { model | httpError = Just error } globals (Navigation.newUrl "#login")
+                UpdateResult { model | httpError = Just error } globals Cmd.none
 
         BalanceRequestSuccessfull result ->
             UpdateResult { model | balance = Just result.data } globals Cmd.none
