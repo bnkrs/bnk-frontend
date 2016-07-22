@@ -166,16 +166,17 @@ urlUpdate page model =
         newSettings =
             { settings | phrase = [], httpError = Nothing }
 
-        newRegister =
-            Components.Register.initialModel
-
         newHome =
             { home | httpError = Nothing }
-
-        newLogin =
-            Components.Login.initialModel
     in
-        ( { model | currentPage = page, settings = newSettings, home = newHome, register = newRegister }
+        ( { model
+            | currentPage = page
+            , settings = newSettings
+            , home = newHome
+            , register = Components.Register.initialModel
+            , transactions = Components.Transactions.initialModel
+            , login = Components.Login.initialModel
+          }
         , commandForPage model page
         )
 
