@@ -276,7 +276,7 @@ navBar { globals, currentPage } =
                 li
                     [ class <| HtmlUtils.activeIfTrue <| currentPage == TransactionsPage
                     ]
-                    [ a [ href "#transactions" ] [ text "Transactions" ] ]
+                    [ a [ href "#transactions" ] [ text "New Transaction" ] ]
 
         settingsElement =
             HtmlUtils.showIfTrue (not <| String.isEmpty globals.username) <|

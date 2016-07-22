@@ -7,6 +7,8 @@ import Task
 import Json.Decode as JD exposing ((:=))
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Date
+import String
 import Navigation
 import Utils.HttpUtils exposing (httpErrorToString, isTokenExpired)
 import Utils.HtmlUtils exposing (..)
@@ -72,7 +74,7 @@ update msg model globals =
             UpdateResult { model | balance = Just result.data } globals Cmd.none
 
         TransactionsRequestSuccessfull result ->
-            UpdateResult model globals Cmd.none
+            UpdateResult { model | transactions = List.reverse result.data } globals Cmd.none
 
 
 urlChange : Globals.Model -> Cmd Msg
@@ -103,14 +105,13 @@ doTransactionRequest { endpoint, apiToken } =
         successReader =
             jsonReader <|
                 JD.at [ "transactions" ] <|
-                    (JD.list <|
+                    JD.list <|
                         JD.object4
                             Transaction
                             ("sender" := JD.string)
                             ("receiver" := JD.string)
                             ("value" := JD.int)
                             ("timestamp" := JD.int)
-                    )
 
         failReader =
             jsonReader (JD.at [ "error" ] ("message" := JD.string))
@@ -160,7 +161,10 @@ view model =
             [ errorView model
             , div
                 [ class "lead" ]
-                [ text "Current balance: ", text <| formatBalance model.balance ]
+                [ text "Current Balance: "
+                , text <| formatBalance model.balance
+                ]
+            , transactionTable model.transactions
             ]
         , div [ class "col-xs-1" ] []
         ]
@@ -174,6 +178,37 @@ formatBalance balance =
 
         Nothing ->
             "No data yet"
+
+
+transactionRow : Transaction -> Html Msg
+transactionRow { sender, receiver, value, timestamp } =
+    let
+        date =
+            timestamp
+                |> toFloat
+                |> Date.fromTime
+                |> toString
+    in
+        tr []
+            [ td [] [ text <| String.slice 1 ((String.length date) - 1) date ]
+            , td [] [ text sender ]
+            , td [] [ text receiver ]
+            , td [] [ text <| toString (toFloat value / 100) ++ " €" ]
+            ]
+
+
+transactionTable : List Transaction -> Html Msg
+transactionTable transactions =
+    table [ class "table table-striped" ]
+        [ thead []
+            [ th [] [ text "Date" ]
+            , th [] [ text "Sender" ]
+            , th [] [ text "Recipient" ]
+            , th [] [ text "Amount" ]
+            ]
+        , tbody []
+            (List.map transactionRow transactions)
+        ]
 
 
 errorView : Model -> Html Msg
