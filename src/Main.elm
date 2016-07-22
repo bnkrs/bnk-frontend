@@ -146,13 +146,22 @@ update msg model =
 urlUpdate : Page -> Model -> ( Model, Cmd Msg )
 urlUpdate page model =
     let
-        settings =
-            model.settings
+        { settings, home } =
+            model
 
         newSettings =
             { settings | phrase = [], httpError = Nothing }
+
+        newRegister =
+            Components.Register.initialModel
+
+        newHome =
+            { home | httpError = Nothing }
+
+        newLogin =
+            Components.Login.initialModel
     in
-        ( { model | currentPage = page, settings = newSettings }
+        ( { model | currentPage = page, settings = newSettings, home = newHome, register = newRegister }
         , commandForPage model page
         )
 
