@@ -4,22 +4,21 @@ echo "Starting demo-instance generation of bnk-frontend"
 echo "It is $(date)."
 echo
 
-# Remove old demo-instace
-rm -rf ./repo/dist
+cd ..
 
-# Cloning the repo
-echo "Cloning the bnk-frontend repo"
-git clone ssh://git@github.com/bnkrs/bnk-frontend.git ./repo 2>&1
-echo
+if [ "$(git branch)" != "* master" ]; then
+  echo "Not on master-branch, not building demo-instance."
+  echo "THIS IS NOT AN ERROR!"
+  exit 0
+fi
+
+# Remove old demo-instace
+rm -rf ./dist
 
 # Cloning the apidoc-repo
 echo "Cloning the demo-repo, checking out gh-pages"
-git clone ssh://git@github.com/bnkrs/demo.git ./repo/dist 2>&1
+git clone ssh://git@github.com/bnkrs/demo.git ./dist 2>&1
 git checkout gh-pages 2>&1
-echo
-
-echo "Changing directory..."
-cd ./repo
 echo
 
 echo "Moving the .git-directory out of the demo-instance dir"
