@@ -27,7 +27,12 @@ mv ./dist/.git ./dist-git
 echo
 
 echo "Building the demo-instace for production"
-npm run build
+npm run build 2>&1 &
+PID="$!"
+while kill -0 $PID 2> /dev/null; do
+    echo "Webpack still running..."
+    sleep 60
+done
 echo
 
 echo "Moving the git-directory back and commiting"
