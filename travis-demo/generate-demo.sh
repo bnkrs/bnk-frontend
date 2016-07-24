@@ -6,7 +6,7 @@ echo
 
 cd ..
 
-if [ "$(git branch)" != "* master" ]; then
+if [[ "$(git branch)" != *master* ]]; then
   echo "Not on master-branch, not building demo-instance."
   echo "THIS IS NOT AN ERROR!"
   exit 0
