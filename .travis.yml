@@ -1,0 +1,28 @@
+sudo: false
+language: node_js
+node_js:
+  - '6'
+
+env:
+  - BUILD_TYPE="TEST"
+  - BUILD_TYPE="DEMO"
+
+before_install:
+  - openssl aes-256-cbc -K $encrypted_f8b4d0278956_key -iv $encrypted_f8b4d0278956_iv -in travis-demo/bnkbot_sshkey.enc -out travis-demo/bnkbot_sshkey -d
+  - mkdir -p ~/.ssh
+  - cp travis-demo/bnkbot_sshkey ~/.ssh/id_rsa
+  - cp travis-demo/bnkbot_sshkey.pub ~/.ssh/id_rsa.pub
+  - chmod 600 ~/.ssh/id_rsa
+
+install:
+  - npm install -g elm rimraf webpack
+  - npm install
+  - elm package install -y
+
+before_script:
+  - git config --global user.email "github-bot@bnkapp.xyz"
+  - git config --global user.name "bnkbot"
+
+script:
+  - if [ "$BUILD_TYPE" == "TEST" ]; then echo "No unit tests yet configured"; fi
+  - if [ "$BUILD_TYPE" == "DEMO" ]; then cd travis-demo; sh generate-demo.sh; fi
